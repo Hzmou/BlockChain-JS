@@ -1,0 +1,27 @@
+{
+  "name": "blockchain-js",
+  "version": "1.0.0",
+  "description": "Basic blockchain application in JS",
+  "main": "main.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hzmou/BlockChain-JS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Hzmou/BlockChain-JS/issues"
+  },
+  "homepage": "https://github.com/Hzmou/BlockChain-JS#readme",
+  "dependencies": {
+    "crypto-js": "^4.2.0"
+  }
+}
