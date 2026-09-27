@@ -5,10 +5,11 @@ Basic blockchain application in JS
 
  file structure:
 
- 
+
 basic-blockchain/
 │
 ├── package.json
+├── package-lock.json
 ├── main.js
 │
 ├── blockchain/
@@ -16,5 +17,7 @@ basic-blockchain/
 │   ├── Blockchain.js
 │   └── Transaction.js
 │
-└── utils/
-    └── crypto.js
+├── utils/
+│   └── crypto.js
+│
+└── node_modules/
