@@ -4,7 +4,8 @@
 /* This class is responsible for managing the chain of blocks, 
 adding new blocks, and validating the integrity of the blockchain. */
 
-
+const Block = require("./Block");
+const Transaction = require("./transaction");
 
 class Blockchain {
 
@@ -52,10 +53,7 @@ minePendingTransactions(minerAddress){
     
 
     const rewardTransaction = new Transaction(null, minerAddress, this.miningReward);
-
-
-
-
+    
 }
 
 
