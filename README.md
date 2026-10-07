@@ -21,3 +21,8 @@ basic-blockchain/
 │   └── crypto.js
 │
 └── node_modules/
+
+
+structure and functions of each file:
+
+
