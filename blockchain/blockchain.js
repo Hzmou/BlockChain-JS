@@ -17,7 +17,7 @@ class Blockchain {
   //  known as the genesis block
 
   createGenesisBlock() {
-    return new Block(0, "01/01/2024", "Genesis Block", "0");
+    return new Block(0, "01/01/2024", [], "0");
   }
 
   // get info about the latest block in the blockchain.
@@ -64,12 +64,12 @@ class Blockchain {
 
     for (const block of this.chain) {
       for (const trans of block.transactions) {
-        if (trans.fromAddress == address) {
-          balance -= trans.amount; // Subtract the amount from the balance if the address is the sender
+        if (trans.fromAddress === address) {
+          balance -= trans.amount;
         }
 
-        if (trans.toAddress == address) {
-          balance += trans.amount; // Add the amount to the balance if the address is the receiver
+        if (trans.toAddress === address) {
+          balance += trans.amount;
         }
       }
     }
@@ -77,37 +77,39 @@ class Blockchain {
     return balance;
   }
 
+  // function to check the validity of the blockchain.
 
-// function to check the validity of the blockchain.
+  isChainValid() {
+    for (let i = 1; i < this.chain.length; i++) {
+      const currentBlock = this.chain[i];
+      const previousBlock = this.chain[i - 1];
 
-isChainValid(){
+      if (currentBlock.hash !== currentBlock.calculateHash()) {
+        return false; // The current block's hash is invalid
+      }
 
-    for(let i = 1 ; i<this.chain.length; i++){
+      if (currentBlock.previousHash !== previousBlock.hash) {
+        return false; // The previous block's hash does not match the current block's previousHash
+      }
 
-       const currentBlock = this.chain[i];
-       const previousBlock = this.chain[i-1];
-       
+      // Additional checks can be added here if needed, such as verifying the integrity of transactions within the block.
 
-       if (currentBlock.hash !== currentBlock.calculateHash()) {
-         return false; // The current block's hash is invalid
-       }
+      for (const trans of currentBlock.transactions) {
+        const isReward = trans.fromAddress === null;
 
-       if (currentBlock.previousHash !== previousBlock.hash) {
-         return false; // The previous block's hash does not match the current block's previousHash
-       }
-
-       // Additional checks can be added here if needed, such as verifying the integrity of transactions within the block.  
-
-       for (const trans of currentBlock.transactions){
-        if (!trans.fromAddress || !trans.toAddress || !trans.amount) {
+        if (
+          (!isReward && !trans.fromAddress) ||
+          !trans.toAddress ||
+          !Number.isFinite(trans.amount) ||
+          trans.amount <= 0
+        ) {
           return false; // The transaction is invalid if it doesn't have a fromAddress, toAddress, or amount
         }
-       }
+      }
     }
-   
+
     return true;
   }
-
 }
 
 module.exports = Blockchain;

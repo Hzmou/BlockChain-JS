@@ -8,11 +8,11 @@ const hash = require("../utils/crypto");
 class Block {
 
 
-constructor(index, timestamp, data,previousHash = ""){
+constructor(index, timestamp, transactions,previousHash = ""){
 
     this.index = index;
     this.timestamp = timestamp;
-    this.data = data;
+    this.transactions = transactions;
     this.previousHash = previousHash;
     this.hash = this.calculateHash();
     this.nonce = 0;
@@ -22,7 +22,7 @@ constructor(index, timestamp, data,previousHash = ""){
 calculateHash() {
      return hash(this.index+
     this.previousHash+this.timestamp+
-    JSON.stringify(this.data)+ 
+    JSON.stringify(this.transactions)+ 
     this.nonce
      );
 
