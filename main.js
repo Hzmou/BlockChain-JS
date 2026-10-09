@@ -126,13 +126,13 @@ function viewBlockchain() {
     console.log(`\nBlock #${block.index}`);
     console.log(`Date: ${timestamp}`);
 
-    if (Array.isArray(block.data)) {
-      if (block.data.length === 0) {
+    if (Array.isArray(block.transactions)) {
+      if (block.transactions.length === 0) {
         console.log("Transactions: none");
       } else {
         console.log("Transactions:");
 
-        block.data.forEach((transaction, index) => {
+        block.transactions.forEach((transaction, index) => {
           const sender = transaction.fromAddress ?? "Mining reward";
           console.log(
             `  ${index + 1}. ${sender} -> ${transaction.toAddress}: ${transaction.amount} coins`
@@ -140,7 +140,7 @@ function viewBlockchain() {
         });
       }
     } else {
-      console.log(`Details: ${block.data}`);
+      console.log(`Details: ${block.transactions}`);
     }
 
     console.log(`Hash: ${block.hash}`);
