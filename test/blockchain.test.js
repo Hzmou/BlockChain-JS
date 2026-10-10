@@ -25,3 +25,4 @@ test('accepts reward transactions when validating the chain', () => {
 
   assert.equal(blockchain.isChainValid(), true);
 });
+

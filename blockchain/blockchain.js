@@ -26,8 +26,49 @@ class Blockchain {
   }
 
   // create a tansaction and add it to the list of pending transactions.
-  createTransaction(Transaction) {
-    this.pendingTransactions.push(Transaction);
+  createTransaction(transaction) {
+    // enhanicing this function to include a few more cases for security
+    //  and validity checks.
+
+    //first we check if the transaction is valid.
+    if (!transaction || typeof transaction !== "object") {
+      throw new Error("A transaction is required.");
+    }
+
+    // destructure the transaction object to get fromAddress, toAddress, and amount.
+
+    const { fromAddress, toAddress, amount } = transaction;
+
+    // check if the fromAddress, toAddress, and amount are valid.
+
+    if (typeof fromAddress !== "string" || !fromAddress.trim()) {
+      throw new Error("A valid sender address is required.");
+    }
+
+    if (typeof toAddress !== "string" || !toAddress.trim()) {
+      throw new Error("A valid recipient address is required.");
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error("A valid transaction amount is required.");
+    }
+
+    // calculate the pending outgoing transactions for the sender and check if the available balance is sufficient.
+    const pendingOutgoing = this.pendingTransactions
+      .filter((pending) => pending.fromAddress === fromAddress)
+      .reduce((total, pending) => total + pending.amount, 0);
+
+    // calculate the available balance for the sender by subtracting pending outgoing transactions from the current balance.
+    const availableBalance =
+      this.getBalanceOfAddress(fromAddress) - pendingOutgoing;
+
+    // report an error if the transaction amount exceeds the available balance.
+    if (amount > availableBalance) {
+      throw new Error("Insufficient balance.");
+    }
+
+    // add the transaction to the list of pending transactions.
+    this.pendingTransactions.push(transaction);
   }
 
   // function to mine a new block and add it to the blockchain.
