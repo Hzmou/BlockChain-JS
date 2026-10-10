@@ -15,7 +15,7 @@ const r1 = readLine.createInterface({
   output: process.stdout,
 });
 
-// function showMenu to dipslay the starting Menu of the application.
+// function showMenu to display the starting Menu of the application.
 
 function showMenu() {
   console.log("\n==============================");

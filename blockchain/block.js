@@ -25,7 +25,7 @@ class Block {
 
   /*
 
-   * proof of work algorith to mine a block by finding a hash
+  * proof of work algorithm to mine a block by finding a hash
    * in the blockchain that starts with a certain number of 
    * leading zeros. 
 */

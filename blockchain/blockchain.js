@@ -25,9 +25,9 @@ class Blockchain {
     return this.chain[this.chain.length - 1];
   }
 
-  // create a tansaction and add it to the list of pending transactions.
+  // create a transaction and add it to the list of pending transactions.
   createTransaction(transaction) {
-    // enhanicing this function to include a few more cases for security
+    // enhancing this function to include a few more cases for security
     //  and validity checks.
 
     //first we check if the transaction is valid.
