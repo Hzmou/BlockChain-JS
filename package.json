@@ -4,10 +4,10 @@
   "description": "Basic blockchain application in JS",
   "main": "main.js",
   "directories": {
-    "test": "test"
+    "test": "node --test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "repository": {
     "type": "git",

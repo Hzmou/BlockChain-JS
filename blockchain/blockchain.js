@@ -25,9 +25,50 @@ class Blockchain {
     return this.chain[this.chain.length - 1];
   }
 
-  // create a tansaction and add it to the list of pending transactions.
-  createTransaction(Transaction) {
-    this.pendingTransactions.push(Transaction);
+  // create a transaction and add it to the list of pending transactions.
+  createTransaction(transaction) {
+    // enhancing this function to include a few more cases for security
+    //  and validity checks.
+
+    //first we check if the transaction is valid.
+    if (!transaction || typeof transaction !== "object") {
+      throw new Error("A transaction is required.");
+    }
+
+    // destructure the transaction object to get fromAddress, toAddress, and amount.
+
+    const { fromAddress, toAddress, amount } = transaction;
+
+    // check if the fromAddress, toAddress, and amount are valid.
+
+    if (typeof fromAddress !== "string" || !fromAddress.trim()) {
+      throw new Error("A valid sender address is required.");
+    }
+
+    if (typeof toAddress !== "string" || !toAddress.trim()) {
+      throw new Error("A valid recipient address is required.");
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error("A valid transaction amount is required.");
+    }
+
+    // calculate the pending outgoing transactions for the sender and check if the available balance is sufficient.
+    const pendingOutgoing = this.pendingTransactions
+      .filter((pending) => pending.fromAddress === fromAddress)
+      .reduce((total, pending) => total + pending.amount, 0);
+
+    // calculate the available balance for the sender by subtracting pending outgoing transactions from the current balance.
+    const availableBalance =
+      this.getBalanceOfAddress(fromAddress) - pendingOutgoing;
+
+    // report an error if the transaction amount exceeds the available balance.
+    if (amount > availableBalance) {
+      throw new Error("Insufficient balance.");
+    }
+
+    // add the transaction to the list of pending transactions.
+    this.pendingTransactions.push(transaction);
   }
 
   // function to mine a new block and add it to the blockchain.
@@ -77,37 +118,112 @@ class Blockchain {
     return balance;
   }
 
-  // function to check the validity of the blockchain.
+  /*
+  function to check the validity of the blockchain.
+  it checks the genesis block, block indexes and links, hashes, 
+  proof-of-work, transaction structure, 
+  and exactly one valid mining reward per mined block.
+*/
 
   isChainValid() {
+    // Reject a missing/empty chain or an invalid proof-of-work difficulty.
+    if (
+      !Array.isArray(this.chain) ||
+      this.chain.length === 0 ||
+      !Number.isInteger(this.difficulty) ||
+      this.difficulty < 0
+    ) {
+      return false;
+    }
+
+    // Check the genesis block separately because it has no previous block
+    // and should not contain transactions.
+    const genesis = this.chain[0];
+
+    if (
+      !genesis ||
+      typeof genesis.calculateHash !== "function" ||
+      genesis.index !== 0 ||
+      genesis.previousHash !== "0" ||
+      !Array.isArray(genesis.transactions) ||
+      genesis.transactions.length !== 0 ||
+      !Number.isInteger(genesis.nonce) ||
+      genesis.nonce < 0 ||
+      typeof genesis.hash !== "string" ||
+      genesis.hash !== genesis.calculateHash()
+    ) {
+      return false;
+    }
+
+    // Each mined block's hash must start with this many zeroes.
+    const proofPrefix = "0".repeat(this.difficulty);
+
+    // Check each block after the genesis block.
     for (let i = 1; i < this.chain.length; i++) {
-      const currentBlock = this.chain[i];
+      const block = this.chain[i];
       const previousBlock = this.chain[i - 1];
 
-      if (currentBlock.hash !== currentBlock.calculateHash()) {
-        return false; // The current block's hash is invalid
+      // Check the block's structure, position, hash, link to the previous block,
+      // and proof-of-work.
+      if (
+        !block ||
+        typeof block.calculateHash !== "function" ||
+        block.index !== i ||
+        !Array.isArray(block.transactions) ||
+        !Number.isInteger(block.nonce) ||
+        block.nonce < 0 ||
+        typeof block.hash !== "string" ||
+        block.hash !== block.calculateHash() ||
+        block.previousHash !== previousBlock.hash ||
+        !block.hash.startsWith(proofPrefix)
+      ) {
+        return false;
       }
 
-      if (currentBlock.previousHash !== previousBlock.hash) {
-        return false; // The previous block's hash does not match the current block's previousHash
-      }
+      let rewardCount = 0;
 
-      // Additional checks can be added here if needed, such as verifying the integrity of transactions within the block.
-
-      for (const trans of currentBlock.transactions) {
-        const isReward = trans.fromAddress === null;
+      // Check each transaction's basic fields and handle mining rewards separately.
+      for (let j = 0; j < block.transactions.length; j++) {
+        const transaction = block.transactions[j];
 
         if (
-          (!isReward && !trans.fromAddress) ||
-          !trans.toAddress ||
-          !Number.isFinite(trans.amount) ||
-          trans.amount <= 0
+          !transaction ||
+          typeof transaction !== "object" ||
+          typeof transaction.toAddress !== "string" ||
+          !transaction.toAddress.trim() ||
+          !Number.isFinite(transaction.amount) ||
+          transaction.amount <= 0
         ) {
-          return false; // The transaction is invalid if it doesn't have a fromAddress, toAddress, or amount
+          return false;
         }
+
+        // A reward transaction has no sender. Require it to be the final
+        // transaction and to have the configured reward amount.
+        if (transaction.fromAddress === null) {
+          rewardCount++;
+
+          if (
+            j !== block.transactions.length - 1 ||
+            transaction.amount !== this.miningReward
+          ) {
+            return false;
+          }
+        } else if (
+          // Normal transactions must have a non-empty sender address.
+          typeof transaction.fromAddress !== "string" ||
+          !transaction.fromAddress.trim()
+        ) {
+          return false;
+        }
+      }
+
+      // Each mined block must contain exactly one reward transaction.
+      if (rewardCount !== 1) {
+        return false;
       }
     }
 
+    // Every block passed the checks.
     return true;
   }
 }
