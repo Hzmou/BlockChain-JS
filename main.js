@@ -3,6 +3,7 @@ const readLine = require("readline");
 
 const Blockchain = require("./blockchain/blockchain");
 const Transaction = require("./blockchain/Transaction");
+const Wallet = require("./blockchain/wallet");
 
 // create an instance of the blockchain class, we'll call it myCoin.
 
@@ -18,18 +19,38 @@ const r1 = readLine.createInterface({
 // function showMenu to display the starting Menu of the application.
 
 function showMenu() {
-  console.log("\n==============================");
-  console.log("      SIMPLE BLOCKCHAIN");
-  console.log("==============================");
-  console.log("1. Create Transaction");
-  console.log("2. Mine Block");
-  console.log("3. Check Balance");
-  console.log("4. View Blockchain");
-  console.log("5. Validate Blockchain");
-  console.log("6. Tamper Blockchain");
-  console.log("0. Exit");
-  console.log("==============================");
-  r1.question("Choose an option: ", handleChoice);
+  const colors = process.stdout.isTTY
+    ? {
+        reset: "\x1b[0m",
+        cyan: "\x1b[36m",
+        blue: "\x1b[34m",
+        dim: "\x1b[2m",
+        bold: "\x1b[1m",
+      }
+    : { reset: "", cyan: "", blue: "", dim: "", bold: "" };
+  const contentWidth = 44;
+  const border = `+${"-".repeat(contentWidth + 2)}+`;
+  const line = (text = "") => `| ${text.padEnd(contentWidth)} |`;
+  const center = (text) =>
+    text.padStart(Math.floor((contentWidth + text.length) / 2)).padEnd(contentWidth);
+
+  console.log(`\n${colors.cyan}${border}`);
+  console.log(line(center("SIMPLE BLOCKCHAIN")));
+  console.log(line(center("WALLET & LEDGER")));
+  console.log(`${border}${colors.reset}`);
+  console.log(`${colors.dim}${line("LEDGER")}${colors.reset}`);
+  console.log(`${colors.blue}${line("1  Create transaction")}${colors.reset}`);
+  console.log(`${colors.blue}${line("2  Mine block")}${colors.reset}`);
+  console.log(`${colors.blue}${line("3  Check balance")}${colors.reset}`);
+  console.log(`${colors.blue}${line("4  View blockchain")}${colors.reset}`);
+  console.log(`${colors.blue}${line("5  Validate blockchain")}${colors.reset}`);
+  console.log(`${colors.blue}${line("6  Tamper blockchain")}${colors.reset}`);
+  console.log(`${colors.dim}${line("WALLET")}${colors.reset}`);
+  console.log(`${colors.blue}${line("7  Create wallet")}${colors.reset}`);
+  console.log(`${border}`);
+  console.log(`${colors.dim}${line("0  Exit")}${colors.reset}`);
+  console.log(`${colors.cyan}${border}${colors.reset}`);
+  r1.question(`${colors.bold}Choose an option${colors.reset} ${colors.cyan}>${colors.reset} `, handleChoice);
 }
 
 // function to handle the user's choice from the menu.
@@ -60,6 +81,10 @@ function handleChoice(choice) {
     case "6":
       // Call the function to tamper with the blockchain
       tamperBlockchain();
+      break;
+    case "7":
+      // Call the function to create a wallet
+      createWallet();
       break;
     case "0":
       // Exit the application
@@ -180,6 +205,15 @@ function tamperBlockchain() {
     console.log("Blockchain is empty.");
     return showMenu();
   }
+}
+
+
+function createWallet() {
+  const wallet = new Wallet();
+  console.log("New wallet created:");
+  console.log(`Address: ${wallet.address}`);
+  console.log(`Public Key: ${wallet.publicKey}`);
+  showMenu();
 }
 
 showMenu();
