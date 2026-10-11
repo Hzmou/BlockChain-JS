@@ -4,6 +4,8 @@ adding new blocks, and validating the integrity of the blockchain. */
 
 const Block = require("./block");
 const Transaction = require("./Transaction");
+const Wallet = require("./wallet");
+
 
 class Blockchain {
   constructor() {
@@ -53,6 +55,18 @@ class Blockchain {
       throw new Error("A valid transaction amount is required.");
     }
 
+    //  check that only real wallet transafers must be signed. 
+
+    if(typeof publicKey !== "string" || typeof signature !== "string") {
+      throw new Error("A valid signature is required for real wallet transfers.");
+    }
+    
+
+    // verify the transaction signature to ensure it is valid.
+    if (!Wallet.verifyTransaction(transaction)) {
+    throw new Error("Invalid transaction signature.");
+  }
+
     // calculate the pending outgoing transactions for the sender and check if the available balance is sufficient.
     const pendingOutgoing = this.pendingTransactions
       .filter((pending) => pending.fromAddress === fromAddress)
@@ -83,21 +97,24 @@ class Blockchain {
 
     this.pendingTransactions.push(rewardTransaction);
 
+
+     const transactions = [
+    ...this.pendingTransactions,
+    rewardTransaction,
+  ];
+
     // create a new block with the pending transactions and add it to the blockchain.
 
     const block = new Block(
       this.chain.length,
       Date.now(),
-      this.pendingTransactions,
+      transactions,
       this.getLatestBlock().hash,
     );
 
-    block.mineBlock(this.difficulty);
-
-    this.chain.push(block);
-
-    // reset the list of pending transactions after mining a new block.
-    this.pendingTransactions = [];
+   block.mineBlock(this.difficulty);
+   this.chain.push(block);
+   this.pendingTransactions = [];
   }
 
   getBalanceOfAddress(address) {
