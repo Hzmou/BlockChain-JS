@@ -57,7 +57,10 @@ class Blockchain {
 
     //  check that only real wallet transafers must be signed. 
 
-    if(typeof publicKey !== "string" || typeof signature !== "string") {
+    if (
+      typeof transaction.publicKey !== "string" ||
+      typeof transaction.signature !== "string"
+    ) {
       throw new Error("A valid signature is required for real wallet transfers.");
     }
     
@@ -95,13 +98,7 @@ class Blockchain {
       this.miningReward,
     );
 
-    this.pendingTransactions.push(rewardTransaction);
-
-
-     const transactions = [
-    ...this.pendingTransactions,
-    rewardTransaction,
-  ];
+    const transactions = [...this.pendingTransactions, rewardTransaction];
 
     // create a new block with the pending transactions and add it to the blockchain.
 
@@ -228,7 +225,8 @@ class Blockchain {
         } else if (
           // Normal transactions must have a non-empty sender address.
           typeof transaction.fromAddress !== "string" ||
-          !transaction.fromAddress.trim()
+          !transaction.fromAddress.trim() || 
+          !Wallet.verifyTransaction(transaction)
         ) {
           return false;
         }

@@ -1,13 +1,13 @@
 // Import the readline module to handle user input from the command line.
 const readLine = require("readline");
-
 const Blockchain = require("./blockchain/blockchain");
-const Transaction = require("./blockchain/Transaction");
 const Wallet = require("./blockchain/wallet");
 
 // create an instance of the blockchain class, we'll call it myCoin.
 
 const myCoin = new Blockchain();
+// wallet registry where all created wallets will be stored.
+const wallets = new Map();
 
 // create an interface for reading input from the command line.
 
@@ -32,7 +32,9 @@ function showMenu() {
   const border = `+${"-".repeat(contentWidth + 2)}+`;
   const line = (text = "") => `| ${text.padEnd(contentWidth)} |`;
   const center = (text) =>
-    text.padStart(Math.floor((contentWidth + text.length) / 2)).padEnd(contentWidth);
+    text
+      .padStart(Math.floor((contentWidth + text.length) / 2))
+      .padEnd(contentWidth);
 
   console.log(`\n${colors.cyan}${border}`);
   console.log(line(center("SIMPLE BLOCKCHAIN")));
@@ -50,7 +52,10 @@ function showMenu() {
   console.log(`${border}`);
   console.log(`${colors.dim}${line("0  Exit")}${colors.reset}`);
   console.log(`${colors.cyan}${border}${colors.reset}`);
-  r1.question(`${colors.bold}Choose an option${colors.reset} ${colors.cyan}>${colors.reset} `, handleChoice);
+  r1.question(
+    `${colors.bold}Choose an option${colors.reset} ${colors.cyan}>${colors.reset} `,
+    handleChoice,
+  );
 }
 
 // function to handle the user's choice from the menu.
@@ -97,15 +102,36 @@ function handleChoice(choice) {
   }
 }
 
-/* Function to create a new transaction */
+/* Function to create a new transaction, 
+this implementation includes wallet integration.  */
 
 function createTransaction() {
-  r1.question("Enter the sender's address: ", (sender) => {
-    r1.question("Enter the recipient address: ", (recipient) => {
-      r1.question("Enter the desired amount: ", (amount) => {
-        const transaction = new Transaction(sender, recipient, Number(amount));
-        myCoin.createTransaction(transaction);
-        console.log("Transaction created successfully.");
+  if (wallets.size === 0) {
+    console.log("Create a wallet before sending a transaction.");
+    return showMenu();
+  }
+
+  r1.question("Enter your wallet address: ", (senderAddress) => {
+    const wallet = wallets.get(senderAddress.trim());
+
+    if (!wallet) {
+      console.log("No wallet found in this address. ");
+      return showMenu();
+    }
+
+    r1.question("Enter the recipient's address: ", (recipientAddress) => {
+      r1.question("Enter the amount to send: ", (amount) => {
+        try {
+          const transaction = wallet.createTransaction(
+            recipientAddress.trim(),
+            Number(amount),
+          );
+          myCoin.createTransaction(transaction);
+          console.log("Signed transaction added successfully.");
+        } catch (error) {
+          console.log(`Transaction failed: ${error.message}`);
+        }
+
         showMenu();
       });
     });
@@ -160,7 +186,7 @@ function viewBlockchain() {
         block.transactions.forEach((transaction, index) => {
           const sender = transaction.fromAddress ?? "Mining reward";
           console.log(
-            `  ${index + 1}. ${sender} -> ${transaction.toAddress}: ${transaction.amount} coins`
+            `  ${index + 1}. ${sender} -> ${transaction.toAddress}: ${transaction.amount} coins`,
           );
         });
       }
@@ -207,9 +233,10 @@ function tamperBlockchain() {
   }
 }
 
-
 function createWallet() {
   const wallet = new Wallet();
+
+  wallets.set(wallet.address, wallet);
   console.log("New wallet created:");
   console.log(`Address: ${wallet.address}`);
   console.log(`Public Key: ${wallet.publicKey}`);
@@ -217,6 +244,3 @@ function createWallet() {
 }
 
 showMenu();
-
-
-
