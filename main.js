@@ -2,10 +2,12 @@
 const readLine = require("readline");
 const Blockchain = require("./blockchain/blockchain");
 const Wallet = require("./blockchain/wallet");
+const BlockchainService = require("./services/blockchainService");
 
 // create an instance of the blockchain class, we'll call it myCoin.
 
 const myCoin = new Blockchain();
+const blockchainService = new BlockchainService(myCoin);
 // wallet registry where all created wallets will be stored.
 const wallets = new Map();
 
@@ -126,7 +128,7 @@ function createTransaction() {
             recipientAddress.trim(),
             Number(amount),
           );
-          myCoin.createTransaction(transaction);
+          blockchainService.submitTransaction(transaction);
           console.log("Signed transaction added successfully.");
         } catch (error) {
           console.log(`Transaction failed: ${error.message}`);
@@ -145,7 +147,7 @@ function mineBlock() {
   r1.question("Enter the miner's address: ", (minerAddress) => {
     console.log("\n⛏ Mining block...");
 
-    myCoin.minePendingTransactions(minerAddress);
+    blockchainService.mineBlock(minerAddress);
     console.log("Block mined successfully.");
     console.log(`Coins sent to the miner's address ${minerAddress}`);
     showMenu();
@@ -157,7 +159,7 @@ function mineBlock() {
 
 function checkBalance() {
   r1.question("Enter your Address: ", (address) => {
-    const balance = myCoin.getBalanceOfAddress(address);
+    const balance = blockchainService.getBalance(address);
     console.log(`Your balance is: ${balance}`);
     showMenu();
   });
@@ -168,7 +170,7 @@ function checkBalance() {
 function viewBlockchain() {
   console.log("\n=== Blockchain ===");
 
-  for (const block of myCoin.chain) {
+  for (const block of blockchainService.getChain()) {
     const timestamp =
       typeof block.timestamp === "number"
         ? new Date(block.timestamp).toLocaleString()
@@ -201,7 +203,7 @@ function viewBlockchain() {
 }
 
 function validateBlockchain() {
-  const isValid = myCoin.isChainValid();
+  const isValid = blockchainService.isChainValid();
 
   console.log(`Blockchain is ${isValid ? "valid" : "invalid"}`);
 
