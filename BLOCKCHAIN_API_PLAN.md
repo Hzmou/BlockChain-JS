@@ -66,7 +66,18 @@ Example mining request:
 }
 ```
 
-Return clear success responses containing the created transaction, mined block, balance, chain, pending transactions, or validity result as appropriate. Avoid returning private keys.
+Use these JSON success response shapes:
+
+| Method and route | Response body |
+|---|---|
+| `GET /api/chain` | `{ "chain": [...] }` |
+| `GET /api/chain/validity` | `{ "valid": true }` |
+| `GET /api/balances/:address` | `{ "address": "...", "balance": 0 }` |
+| `GET /api/transactions/pending` | `{ "pendingTransactions": [...] }` |
+| `POST /api/transactions` | `{ "message": "Transaction submitted successfully.", "transaction": { ... } }` |
+| `POST /api/mining` | `{ "message": "Block mined successfully.", "block": { ... } }` |
+
+The transaction response contains only the accepted transaction fields (`fromAddress`, `toAddress`, `amount`, `publicKey`, and `signature`). Never return or store private keys.
 
 ## 6. Validate Requests and Map Errors
 
