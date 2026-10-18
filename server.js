@@ -5,8 +5,10 @@
  */
 
 const express = require("express");
+const path = require("node:path");
 const Blockchain = require("./blockchain/blockchain");
 const BlockchainService = require("./services/blockchainService");
+const path = require("node:path"); // Import the path module for handling file paths
 
 function createApp(service) {
   if (!service) {
@@ -14,6 +16,8 @@ function createApp(service) {
   }
 
   const app = express();
+
+  app.use(express.static(path.join(__dirname, "public")));
 
   // Parse JSON request bodies before API routes.
   app.use(express.json());
