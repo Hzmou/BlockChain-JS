@@ -5,11 +5,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blockchain Dashboard</title>
     <link rel="stylesheet" href="/styles.css" />
+    
+
+
   </head>
   <body>
     <main>
-      <h1>Blockchain Dashboard</h1>
-      <p id="status">Loading...</p>
+      <header class="site-header">
+        <div>
+          <p class="eyebrow">Ledger monitor</p>
+          <h1>Blockchain Dashboard</h1>
+          <p>Inspect the current chain and monitor network activity.</p>
+        </div>
+
+        <div class="status-panel" aria-live="polite">
+          <p>
+            API status:
+            <strong id="api-status">Checking...</strong>
+          </p>
+          <p>
+            Chain status:
+            <strong id="chain-validity">Checking...</strong>
+          </p>
+          <button id="refresh-button" type="button">Refresh data</button>
+        </div>
+      </header>
+      <section class="panel" aria-labelledby="balance-heading">
+        <h2 id="balance-heading">Wallet Balance</h2>
+
+        <form id="balance-form">
+          <label for="wallet-address">Wallet address</label>
+          <input
+            id="wallet-address"
+            name="walletAddress"
+            type="text"
+            placeholder="Enter a 64-character wallet address"
+            autocomplete="off"
+          />
+
+          <button type="submit">Check balance</button>
+        </form>
+
+        <p id="action-status" aria-live="polite">
+          Enter a wallet address to view its balance.
+        </p>
+
+        <p>
+          Current balance:
+          <strong id="balance">--</strong>
+        </p>
+      </section>
+
+      <section class="panel" aria-labelledby="pending-heading">
+        <h2 id="pending-heading">Pending Transactions</h2>
+
+        <p>
+          Pending count:
+          <strong id="pending-count">0</strong>
+        </p>
+
+        <div id="pending-transactions" aria-live="polite">
+          <p>No pending transactions.</p>
+        </div>
+      </section>
+
+
+      <section class="panel" aria-labelledby="chain-heading">
+        <h2 id="chain-heading">Blockchain</h2>
+
+        <p>
+          Current block count:
+          <strong id="block-count">0</strong>
+        </p>
+
+        <div id="blockchain" aria-live="polite">
+          <p>No blocks available in the chain.</p>
+        </div>
+      </section>
+
+
+      <section class="panel" aria-labelledby="mining-heading">
+        <h2 id="mining-heading">Mine a New Block</h2>
+
+        <form id="mining-form">
+          <label for="miner-address">Miner address</label>
+          <input
+            id="miner-address"
+            name="minerAddress"
+            type="text"
+            placeholder="Enter a 64-character wallet address"
+            autocomplete="off"
+          />
+
+          <button type="submit">Mine block</button>
+        </form>
+
+        <p id="mining-status" aria-live="polite">
+          Enter a wallet address to mine a new block.
+        </p>
+      </section>
+
+      <section class="panel" aria-labelledby="transaction-heading">
+        <h2 id="transaction-heading">Send Transaction</h2>
+
+
+        <form id="transaction-form">
+
+          <label for="recipient-address">Recipient address</label>
+
+          <input
+            id="recipient-address"
+            name="recipientAddress"
+            type="text"
+            placeholder="Enter a 64-character wallet address"
+            autocomplete="off"
+          />
+
+          <label for="transaction-amount">Amount</label>
+          <input
+            id="transaction-amount"
+            name="amount"
+            type="number"
+            min="0.0001"
+            step="0.0001"
+            placeholder="Enter the amount to send"
+          />
+
+          <button type="submit" disabled>Submit transaction</button>
+        </form>
+
+        <p id="transaction-status" aria-live="polite">
+          Transaction signing will be enabled after browser wallet compatibility is implemented.
+        </p>
+
+      </section>
     </main>
 
     <script src="/app.js"></script>

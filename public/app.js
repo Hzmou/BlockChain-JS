@@ -1,3 +1,12 @@
-const status = document.querySelector("#status");
+function showStatus(message, type = "info") {
+  const status = document.querySelector("#action-status");
 
-status.textContent = "Frontend is ready.";
+  if (!status) {
+    return;
+  }
+
+  status.textContent = message;
+  status.dataset.type = type;
+}
+
+showStatus("Dashboard ready.");
