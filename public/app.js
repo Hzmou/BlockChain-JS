@@ -68,6 +68,43 @@ async function requestJson(url) {
 }
 
 /**
+ * Retrieve the current blockchain.
+ *
+ * @returns {Promise<Object>} The response containing the blockchain.
+ */
+async function getChain() {
+  return requestJson("/api/chain");
+}
+
+/**
+ * Retrieve the blockchain validity status.
+ *
+ * @returns {Promise<Object>} The response containing the validity status.
+ */
+async function getChainValidity() {
+  return requestJson("/api/chain/validity");
+}
+
+/**
+ * Retrieve the balance for a wallet address.
+ *
+ * @param {string} address - The wallet address to check.
+ * @returns {Promise<Object>} The response containing the wallet balance.
+ */
+async function getBalance(address) {
+  return requestJson(`/api/balances/${address}`);
+}
+
+/**
+ * Retrieve all pending transactions.
+ *
+ * @returns {Promise<Object>} The response containing pending transactions.
+ */
+async function getPendingTransactions() {
+  return requestJson("/api/transactions/pending");
+}
+
+/**
  * Render the pending transactions returned by the API.
  *
  * @param {Array<Object>} transactions - The pending transactions to display.
@@ -143,11 +180,22 @@ async function refreshData() {
   elements.apiStatus.textContent = "Loading...";
 
   try {
-    const [chainBody, validityBody, pendingBody] = await Promise.all([
-      requestJson("/api/chain"),
-      requestJson("/api/chain/validity"),
-      requestJson("/api/transactions/pending"),
-    ]);
+    const address = elements.walletAddress.value.trim();
+    const hasValidAddress = addressPattern.test(address);
+    const refreshBalanceRequestId = hasValidAddress
+      ? ++balanceRequestId
+      : balanceRequestId;
+    const balanceRequest = hasValidAddress
+      ? getBalance(address)
+      : Promise.resolve(null);
+
+    const [chainBody, validityBody, pendingBody, balanceBody] =
+      await Promise.all([
+        getChain(),
+        getChainValidity(),
+        getPendingTransactions(),
+        balanceRequest,
+      ]);
 
     elements.apiStatus.textContent = "Online";
     elements.chainValidity.textContent = validityBody.valid
@@ -156,6 +204,13 @@ async function refreshData() {
 
     renderChain(chainBody.chain);
     renderPendingTransactions(pendingBody.pendingTransactions);
+
+    if (
+      balanceBody &&
+      refreshBalanceRequestId === balanceRequestId
+    ) {
+      elements.balance.textContent = balanceBody.balance;
+    }
   } catch (error) {
     elements.apiStatus.textContent = "Unavailable";
     showStatus(error.message, "error");
@@ -186,7 +241,7 @@ async function handleBalanceSubmit(event) {
   showStatus("Loading balance...");
 
   try {
-    const body = await requestJson(`/api/balances/${address}`);
+    const body = await getBalance(address);
 
     if (requestId !== balanceRequestId) {
       return;
