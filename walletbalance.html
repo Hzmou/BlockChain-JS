@@ -1,0 +1,28 @@
+<section class="panel" aria-labelledby="balance-heading">
+  <h2 id="balance-heading">Wallet Balance</h2>
+
+  <p>
+    Check the balance of any wallet.
+  </p>
+
+  <form id="balance-form">
+    <label for="wallet-address">Wallet address</label>
+    <input
+      id="wallet-address"
+      name="walletAddress"
+      type="text"
+      placeholder="Enter a 64-character wallet address"
+      autocomplete="off"
+    />
+    <button type="submit">Check balance</button>
+  </form>
+
+  <p id="balance-status" aria-live="polite">
+    Enter a wallet address to view its balance.
+  </p>
+
+  <p>
+    Current balance:
+    <strong id="balance">--</strong>
+  </p>
+</section>

@@ -5,6 +5,7 @@
  */
 
 const express = require("express");
+const path = require("node:path");
 const Blockchain = require("./blockchain/blockchain");
 const BlockchainService = require("./services/blockchainService");
 
@@ -15,8 +16,12 @@ function createApp(service) {
 
   const app = express();
 
+  
+
   // Parse JSON request bodies before API routes.
   app.use(express.json());
+
+  app.use(express.static(path.join(__dirname, "public")));
 
   // implementation of the API routes for the blockchain application.
 
@@ -91,7 +96,7 @@ function createApp(service) {
 
   // API route to submit a new transaction to the blockchain.
 
-  /* it checks if the request body contains a valid transaction object,
+  /* It checks if the request body contains a valid transaction object,
     and if so, it submits the transaction to the blockchain service and 
     returns a success response. If the transaction is invalid, it throws
      an error with an appropriate status code. */
