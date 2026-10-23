@@ -228,4 +228,3 @@ Additional project plans are available in the `Documentation` directory:
 - `Documentation/pending-work.md`
 
 These documents describe the current implementation plan, completed milestones, and future work.
-```

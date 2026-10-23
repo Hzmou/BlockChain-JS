@@ -24,7 +24,11 @@
   "homepage": "https://github.com/Hzmou/BlockChain-JS#readme",
   "dependencies": {
     "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
     "crypto-js": "^4.2.0",
     "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.5"
   }
 }
