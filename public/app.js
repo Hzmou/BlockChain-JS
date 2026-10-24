@@ -267,14 +267,16 @@ elements.balanceForm.addEventListener("submit", handleBalanceSubmit);
 
 /**
  * Create a browser wallet and display only its public key.
+ * The private key remains in the module-scoped browserWallet variable.
+ * It is never rendered, logged, persisted, or sent to the API.
  */
 
 function handleCreateWallet() {
   try {
     browserWallet = createBrowserWallet();
-    elements.walletAddress.textContent = browserWallet.address;
+    elements.createdWalletAddress.textContent = browserWallet.address;
     elements.walletAddress.value = browserWallet.address;
-    elements.walletAddress.readonly = true;
+    elements.walletAddress.readOnly = true;
 
     elements.walletStatus.textContent =
       "Wallet created in browser memory. The private key is not displayed for security reasons.";
@@ -284,7 +286,8 @@ function handleCreateWallet() {
     browserWallet = null;
     elements.createdWalletAddress.textContent = "Not available";
     elements.walletAddress.value = "";
-    elements.walletAddress.readonly = false;
+    elements.walletAddress.readOnly = false;
+
 
     elements.walletStatus.textContent = "Failed to create browser wallet.";
 
@@ -292,7 +295,7 @@ function handleCreateWallet() {
   }
 }
 
-elements.balanceForm.addEventListener("submit", handleBalanceSubmit);
+
 
 elements.createWalletButton.addEventListener("click", handleCreateWallet);
 
