@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blockchain Dashboard</title>
     <link rel="stylesheet" href="/styles.css" />
-    
-
-
   </head>
   <body>
     <main>
@@ -30,6 +27,20 @@
           <button id="refresh-button" type="button">Refresh data</button>
         </div>
       </header>
+
+      <section class="panel" aria-labelledby="wallet-heading">
+        <h2 id="wallet-heading">Browser Wallet</h2>
+
+        <button id="create-wallet-button" type="button">Create Wallet</button>
+
+        <p id="wallet-status" aria-live="polite">No Wallet has been created.</p>
+
+        <p>
+          Wallet Address:
+
+          <output id="created-wallet-address"> Not available </output>
+        </p>
+      </section>
       <section class="panel" aria-labelledby="balance-heading">
         <h2 id="balance-heading">Wallet Balance</h2>
 
@@ -69,7 +80,6 @@
         </div>
       </section>
 
-
       <section class="panel" aria-labelledby="chain-heading">
         <h2 id="chain-heading">Blockchain</h2>
 
@@ -82,7 +92,6 @@
           <p>No blocks available in the chain.</p>
         </div>
       </section>
-
 
       <section class="panel" aria-labelledby="mining-heading">
         <h2 id="mining-heading">Mine a New Block</h2>
@@ -108,9 +117,7 @@
       <section class="panel" aria-labelledby="transaction-heading">
         <h2 id="transaction-heading">Send Transaction</h2>
 
-
         <form id="transaction-form">
-
           <label for="recipient-address">Recipient address</label>
 
           <input
@@ -135,12 +142,12 @@
         </form>
 
         <p id="transaction-status" aria-live="polite">
-          Transaction signing will be enabled after browser wallet compatibility is implemented.
+          Transaction signing will be enabled after browser wallet compatibility
+          is implemented.
         </p>
-
       </section>
     </main>
 
-    <script src="/app.js"></script>
+    <script type="module" src="/app.js"></script>
   </body>
 </html>

@@ -9,8 +9,15 @@
  * It also handles user actions like creating transactions, mining blocks, and validating the blockchain.
  */
 
+import { createBrowserWallet } from "./browser-wallet.js";
+// The wallet remains in browser memory and is never rendered or sent to the API.
+let browserWallet = null;
+
 // Cache the HTML elements that the client will update.
 const elements = {
+  createWalletButton: document.querySelector("#create-wallet-button"),
+  walletStatus: document.querySelector("#wallet-status"),
+  createdWalletAddress: document.querySelector("#created-wallet-address"),
   apiStatus: document.querySelector("#api-status"),
   chainValidity: document.querySelector("#chain-validity"),
   refreshButton: document.querySelector("#refresh-button"),
@@ -205,10 +212,7 @@ async function refreshData() {
     renderChain(chainBody.chain);
     renderPendingTransactions(pendingBody.pendingTransactions);
 
-    if (
-      balanceBody &&
-      refreshBalanceRequestId === balanceRequestId
-    ) {
+    if (balanceBody && refreshBalanceRequestId === balanceRequestId) {
       elements.balance.textContent = balanceBody.balance;
     }
   } catch (error) {
@@ -260,6 +264,37 @@ async function handleBalanceSubmit(event) {
 }
 
 elements.balanceForm.addEventListener("submit", handleBalanceSubmit);
+
+/**
+ * Create a browser wallet and display only its public key.
+ */
+
+function handleCreateWallet() {
+  try {
+    browserWallet = createBrowserWallet();
+    elements.walletAddress.textContent = browserWallet.address;
+    elements.walletAddress.value = browserWallet.address;
+    elements.walletAddress.readonly = true;
+
+    elements.walletStatus.textContent =
+      "Wallet created in browser memory. The private key is not displayed for security reasons.";
+
+    showStatus("Browser wallet created.", "success");
+  } catch {
+    browserWallet = null;
+    elements.createdWalletAddress.textContent = "Not available";
+    elements.walletAddress.value = "";
+    elements.walletAddress.readonly = false;
+
+    elements.walletStatus.textContent = "Failed to create browser wallet.";
+
+    showStatus("Failed to create browser wallet.", "error");
+  }
+}
+
+elements.balanceForm.addEventListener("submit", handleBalanceSubmit);
+
+elements.createWalletButton.addEventListener("click", handleCreateWallet);
 
 // Load the dashboard data when the page first opens.
 refreshData();
