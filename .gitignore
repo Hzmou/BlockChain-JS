@@ -1,0 +1,13 @@
+# Installed npm dependencies
+node_modules/
+
+# Vite production build output
+public/build/
+
+# macOS metadata
+.DS_Store
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
