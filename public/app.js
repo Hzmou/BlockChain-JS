@@ -9,7 +9,12 @@
  * It also handles user actions like creating transactions, mining blocks, and validating the blockchain.
  */
 
-import { createBrowserWallet } from "./browser-wallet.js";
+
+import {
+  createBrowserWallet,
+  createSignedTransaction,
+} from "./browser-wallet.js";
+
 // The wallet remains in browser memory and is never rendered or sent to the API.
 let browserWallet = null;
 
@@ -32,6 +37,12 @@ const elements = {
 
   blockCount: document.querySelector("#block-count"),
   blockchain: document.querySelector("#blockchain"),
+
+  transactionForm: document.querySelector("#transaction-form"),
+  recipientAddress: document.querySelector("#recipient-address"),
+  transactionAmount: document.querySelector("#transaction-amount"),
+  transactionSubmitButton: document.querySelector("#transaction-submit-button"),
+  transactionStatus: document.querySelector("#transaction-status"),
 };
 
 // Wallet addresses are SHA-256 hashes represented as 64 lowercase hex characters.
@@ -62,8 +73,8 @@ function showStatus(message, type = "info") {
  * @returns {Promise<Object>} The decoded JSON response body.
  * @throws {Error} If the request fails or the API returns an error response.
  */
-async function requestJson(url) {
-  const response = await fetch(url);
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, options);
   const body = await response.json();
 
   // The API uses { error: "..." } for failed requests.
@@ -281,23 +292,105 @@ function handleCreateWallet() {
     elements.walletStatus.textContent =
       "Wallet created in browser memory. The private key is not displayed for security reasons.";
 
+    elements.transactionSubmitButton.disabled = false;
+    elements.transactionStatus.textContent =
+      "Wallet ready. Enter a recipient and amount.";
+
     showStatus("Browser wallet created.", "success");
   } catch {
     browserWallet = null;
     elements.createdWalletAddress.textContent = "Not available";
     elements.walletAddress.value = "";
     elements.walletAddress.readOnly = false;
-
+    elements.transactionSubmitButton.disabled = true;
 
     elements.walletStatus.textContent = "Failed to create browser wallet.";
 
     showStatus("Failed to create browser wallet.", "error");
   }
 }
-
-
-
 elements.createWalletButton.addEventListener("click", handleCreateWallet);
+
+/**
+ * Submit a signed transaction to the blockchain API.
+ *
+ * @param {Object} transaction - The signed transaction to submit.
+ * @returns {Promise<Object>} The API response.
+ */
+async function submitTransaction(transaction) {
+  return requestJson("/api/transactions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(transaction),
+  });
+}
+
+/**
+ * Handle the submission of a transaction form.
+ * @param {Event} event - The form submission event.
+ * @returns {Promise<void>} A promise that resolves when the
+ * transaction has been processed.
+ */
+
+async function handleTransactionSubmit(event) {
+  event.preventDefault();
+
+  if (!browserWallet) {
+    showStatus(
+      "Create a browser wallet before sending a transaction.",
+      "error",
+    );
+    return;
+  }
+
+  const toAddress = elements.recipientAddress.value.trim();
+  const amount = Number(elements.transactionAmount.value);
+
+  if (!addressPattern.test(toAddress)) {
+    elements.transactionStatus.textContent = "Invalid recipient address.";
+    showStatus("Invalid recipient address.", "error");
+    return;
+  }
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    elements.transactionStatus.textContent = "Invalid transaction amount.";
+    showStatus("Invalid transaction amount.", "error");
+    return;
+  }
+
+  elements.transactionSubmitButton.disabled = true;
+  elements.transactionStatus.textContent =
+    "Signing and submitting transaction.";
+
+  try {
+    const signedTransaction = createSignedTransaction(
+      browserWallet,
+      toAddress,
+      amount,
+    );
+
+    await submitTransaction(signedTransaction);
+    elements.transactionStatus.textContent =
+      "Transaction submitted successfully.";
+
+    elements.recipientAddress.value = "";
+    elements.transactionAmount.value = "";
+
+    await refreshData();
+  } catch (error) {
+    const message = error.message || "Failed to submit transaction.";
+    elements.transactionStatus.textContent = message;
+    showStatus(message, "error");
+  } finally {
+    elements.transactionSubmitButton.disabled = false;
+  }
+}
+
+
+elements.transactionForm.addEventListener("submit", handleTransactionSubmit);
+
 
 // Load the dashboard data when the page first opens.
 refreshData();
