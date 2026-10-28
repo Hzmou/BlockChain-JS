@@ -6,6 +6,9 @@ const Blockchain = require("../blockchain/blockchain");
 const Wallet = require("../blockchain/wallet");
 const BlockchainService = require("../services/blockchainService");
 const { createApp } = require("../server");
+const {
+  createBrowserSignedTransaction,
+} = require("./helpers/browser-wallet");
 
 async function withApi(callback, { fundWallet = false } = {}) {
   const blockchain = new Blockchain();
@@ -96,6 +99,29 @@ test("submits a signed transaction and does not return extra private-key data", 
       pendingTransactions: [transaction],
     });
   }, { fundWallet: true });
+});
+
+test("accepts a browser-signed transaction through the API", async () => {
+  await withApi(async ({ baseUrl, service }) => {
+    const recipientAddress = "b".repeat(64);
+    const transaction = await createBrowserSignedTransaction(
+      recipientAddress,
+      25,
+    );
+    service.mineBlock(transaction.fromAddress);
+
+    const response = await fetch(`${baseUrl}/api/transactions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(transaction),
+    });
+    const body = await readJson(response);
+
+    assert.equal(response.status, 201);
+    assert.equal(body.message, "Transaction submitted successfully.");
+    assert.deepEqual(body.transaction, transaction);
+    assert.equal(Object.hasOwn(body.transaction, "privateKey"), false);
+  });
 });
 
 test("mines pending transfers and returns the new block", async () => {

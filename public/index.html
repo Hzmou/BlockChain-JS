@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blockchain Dashboard</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main>
+      <header class="site-header">
+        <div>
+          <p class="eyebrow">Ledger monitor</p>
+          <h1>Blockchain Dashboard</h1>
+          <p>Inspect the current chain and monitor network activity.</p>
+        </div>
+
+        <div class="status-panel" aria-live="polite">
+          <p>
+            API status:
+            <strong id="api-status">Checking...</strong>
+          </p>
+          <p>
+            Chain status:
+            <strong id="chain-validity">Checking...</strong>
+          </p>
+          <button id="refresh-button" type="button">Refresh data</button>
+        </div>
+      </header>
+
+      <section class="panel" aria-labelledby="wallet-heading">
+        <h2 id="wallet-heading">Browser Wallet</h2>
+
+        <button id="create-wallet-button" type="button">Create Wallet</button>
+
+        <p id="wallet-status" role="status" aria-live="polite">
+          No wallet has been created.
+        </p>
+
+        <p>
+          Wallet address:
+          <output id="created-wallet-address">Not available</output>
+        </p>
+      </section>
+      <section class="panel" aria-labelledby="balance-heading">
+        <h2 id="balance-heading">Wallet Balance</h2>
+
+        <form id="balance-form">
+          <label for="wallet-address">Wallet address</label>
+          <p id="wallet-address-help">
+            Use a 64-character lowercase hexadecimal wallet address.
+          </p>
+          <input
+            id="wallet-address"
+            name="walletAddress"
+            type="text"
+            aria-describedby="wallet-address-help"
+            placeholder="Enter a 64-character wallet address"
+            autocomplete="off"
+          />
+
+          <button type="submit">Check balance</button>
+        </form>
+
+        <p id="action-status" role="status" aria-live="polite">
+          Enter a wallet address to view its balance.
+        </p>
+
+        <p>
+          Current balance:
+          <strong id="balance">--</strong>
+        </p>
+      </section>
+
+      <section class="panel" aria-labelledby="pending-heading">
+        <h2 id="pending-heading">Pending Transactions</h2>
+
+        <p>
+          Pending count:
+          <strong id="pending-count">0</strong>
+        </p>
+
+        <div id="pending-transactions" aria-live="polite">
+          <p>No pending transactions.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="chain-heading">
+        <h2 id="chain-heading">Blockchain</h2>
+
+        <p>
+          Current block count:
+          <strong id="block-count">0</strong>
+        </p>
+
+        <div id="blockchain" aria-live="polite">
+          <table>
+            <caption>Recent blockchain blocks</caption>
+            <thead>
+              <tr>
+                <th scope="col">Index</th>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Hash</th>
+                <th scope="col">Previous hash</th>
+                <th scope="col">Transactions</th>
+              </tr>
+            </thead>
+            <tbody id="blockchain-rows">
+              <tr>
+                <td colspan="5">No blocks available in the chain.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="mining-heading">
+        <h2 id="mining-heading">Mine a New Block</h2>
+
+        <form id="mining-form">
+          <label for="miner-address">Miner address</label>
+          <p id="miner-address-help">
+            The mining reward will be assigned to this wallet address.
+          </p>
+          <input
+            id="miner-address"
+            name="minerAddress"
+            type="text"
+            aria-describedby="miner-address-help"
+            placeholder="Enter a 64-character wallet address"
+            autocomplete="off"
+          />
+
+          <button id="mine-button" type="submit">Mine block</button>
+        </form>
+
+        <p id="mining-status" role="status" aria-live="polite">
+          Enter a wallet address to mine a new block.
+        </p>
+      </section>
+
+      <section class="panel" aria-labelledby="transaction-heading">
+        <h2 id="transaction-heading">Send Transaction</h2>
+
+        <form id="transaction-form">
+          <label for="recipient-address">Recipient address</label>
+
+          <p id="recipient-address-help">
+            Enter a 64-character lowercase hexadecimal recipient address.
+          </p>
+          <input
+            id="recipient-address"
+            name="recipientAddress"
+            type="text"
+            aria-describedby="recipient-address-help"
+            placeholder="Enter a 64-character wallet address"
+            autocomplete="off"
+          />
+
+          <label for="transaction-amount">Amount</label>
+          <p id="transaction-amount-help">
+            Enter an amount greater than zero.
+          </p>
+          <input
+            id="transaction-amount"
+            name="amount"
+            type="number"
+            aria-describedby="transaction-amount-help"
+            min="0.0001"
+            step="0.0001"
+            placeholder="Enter the amount to send"
+          />
+
+          <button id="transaction-submit-button" type="submit" disabled>
+            Submit transaction
+          </button>
+        </form>
+
+        <p id="transaction-status" role="status" aria-live="polite">
+          Create a browser wallet before sending a transaction.
+        </p>
+      </section>
+    </main>
+
+    <script type="module" src="/build/app.js"></script>
+  </body>
+</html>
