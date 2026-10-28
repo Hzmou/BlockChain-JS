@@ -53,6 +53,7 @@ Web UI
 - Node.js
 - Express
 - Node test runner
+- Vite
 - `@noble/curves`
 - `crypto-js`
 - secp256k1 elliptic-curve cryptography
@@ -64,6 +65,21 @@ Install the project dependencies:
 ```bash
 npm install
 ```
+
+The frontend is bundled with Vite. If Vite is not already listed in
+`devDependencies`, install it with:
+
+```bash
+npm install --save-dev vite
+```
+
+Build the frontend bundle manually with:
+
+```bash
+npm run build:client
+```
+
+This command creates the browser bundle at `public/build/app.js`.
 
 ## Run the Application
 
