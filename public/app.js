@@ -9,7 +9,6 @@
  * It also handles user actions like creating transactions, mining blocks, and validating the blockchain.
  */
 
-
 import {
   createBrowserWallet,
   createSignedTransaction,
@@ -43,6 +42,11 @@ const elements = {
   transactionAmount: document.querySelector("#transaction-amount"),
   transactionSubmitButton: document.querySelector("#transaction-submit-button"),
   transactionStatus: document.querySelector("#transaction-status"),
+
+  miningForm: document.querySelector("#mining-form"),
+  minerAddress: document.querySelector("#miner-address"),
+  miningStatus: document.querySelector("#mining-status"),
+  miningSubmitButton: document.querySelector("#mine-button"),
 };
 
 // Wallet addresses are SHA-256 hashes represented as 64 lowercase hex characters.
@@ -161,30 +165,36 @@ function renderPendingTransactions(transactions) {
  */
 function renderChain(chain) {
   elements.blockCount.textContent = chain.length;
-  elements.blockchain.replaceChildren();
+  const rows = document.querySelector("#blockchain-rows");
+  rows.replaceChildren();
 
   if (chain.length === 0) {
-    const emptyMessage = document.createElement("p");
-    emptyMessage.textContent = "No blocks available in the chain.";
-    elements.blockchain.append(emptyMessage);
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.textContent = "No blocks available in the chain.";
+    row.append(cell);
+    rows.append(row);
     return;
   }
 
   for (const block of chain) {
-    const blockElement = document.createElement("article");
-    const heading = document.createElement("h3");
-    const details = document.createElement("p");
+    const row = document.createElement("tr");
+    const values = [
+      block.index,
+      block.timestamp,
+      block.hash,
+      block.previousHash,
+      block.transactions.length,
+    ];
 
-    heading.textContent = `Block #${block.index}`;
+    for (const value of values) {
+      const cell = document.createElement("td");
+      cell.textContent = String(value);
+      row.append(cell);
+    }
 
-    details.textContent =
-      `Timestamp: ${block.timestamp} | ` +
-      `Hash: ${block.hash} | ` +
-      `Previous hash: ${block.previousHash} | ` +
-      `Transactions: ${block.transactions.length}`;
-
-    blockElement.append(heading, details);
-    elements.blockchain.append(blockElement);
+    rows.append(row);
   }
 }
 
@@ -297,6 +307,9 @@ function handleCreateWallet() {
       "Wallet ready. Enter a recipient and amount.";
 
     showStatus("Browser wallet created.", "success");
+
+    elements.minerAddress.value = browserWallet.address;
+    elements.minerAddress.readOnly = true;
   } catch {
     browserWallet = null;
     elements.createdWalletAddress.textContent = "Not available";
@@ -307,6 +320,8 @@ function handleCreateWallet() {
     elements.walletStatus.textContent = "Failed to create browser wallet.";
 
     showStatus("Failed to create browser wallet.", "error");
+    elements.minerAddress.value = "";
+    elements.minerAddress.readOnly = false;
   }
 }
 elements.createWalletButton.addEventListener("click", handleCreateWallet);
@@ -361,6 +376,7 @@ async function handleTransactionSubmit(event) {
   }
 
   elements.transactionSubmitButton.disabled = true;
+  elements.transactionSubmitButton.textContent = "Submitting...";
   elements.transactionStatus.textContent =
     "Signing and submitting transaction.";
 
@@ -385,12 +401,81 @@ async function handleTransactionSubmit(event) {
     showStatus(message, "error");
   } finally {
     elements.transactionSubmitButton.disabled = false;
+    elements.transactionSubmitButton.textContent = "Submit transaction";
+  }
+}
+
+elements.transactionForm.addEventListener("submit", handleTransactionSubmit);
+
+/**
+ * Request a new block for a miner address.
+ *
+ * @param {string} minerAddress - The address receiving the mining reward.
+ * @returns {Promise<Object>} The API response.
+ */
+
+async function mineBlock(minerAddress) {
+  return requestJson("/api/mining", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ minerAddress }),
+  });
+}
+
+/**
+ * Mine a block and refresh the dashboard state.
+ *
+ * @param {SubmitEvent} event - The mining form submission event.
+ * @returns {Promise<void>} Resolves after mining and dashboard refresh finish.
+ */
+
+async function handleMiningSubmit(event) {
+  event.preventDefault();
+
+  if (!browserWallet) {
+    const message = "Create a browser wallet before mining a block.";
+    elements.miningStatus.textContent = message;
+    showStatus(message, "error");
+    return;
+  }
+
+  const minerAddress = elements.minerAddress.value.trim();
+
+  if (!addressPattern.test(minerAddress)) {
+    const message = "Enter a valid 64-character miner address.";
+    elements.miningStatus.textContent = message;
+    showStatus(message, "error");
+    return;
+  }
+
+  elements.miningSubmitButton.disabled = true;
+  elements.miningSubmitButton.textContent = "Mining...";
+  elements.miningStatus.textContent = "Mining a new block...";
+
+  try {
+    const response = await mineBlock(minerAddress);
+
+    elements.miningStatus.textContent =
+      response.message || "Block mined successfully.";
+    showStatus("Block mined successfully.", "success");
+    await refreshData();
+  } catch (error) {
+    const message = error.message || "Failed to mine block.";
+    elements.miningStatus.textContent = message;
+    showStatus(message, "error");
+  } finally {
+    elements.miningSubmitButton.disabled = false;
+    elements.miningSubmitButton.textContent = "Mine block";
   }
 }
 
 
-elements.transactionForm.addEventListener("submit", handleTransactionSubmit);
 
+
+
+elements.miningForm.addEventListener("submit", handleMiningSubmit);
 
 // Load the dashboard data when the page first opens.
 refreshData();

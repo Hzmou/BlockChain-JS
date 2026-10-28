@@ -1,6 +1,6 @@
 
 
-```md
+
 # BlockChain-JS
 
 A JavaScript learning project that demonstrates blockchain concepts, wallet-based transaction signing, proof-of-work mining, and a browser dashboard.
