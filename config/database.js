@@ -1,46 +1,83 @@
+const dotenv = require("dotenv");
+const { Pool } = require("pg");
 
-const dentenv = require('dotenv');
-const {pool} = require("pg");
-
-
-/* 
-  
-   * Configuration code for the database connection using environment variables.
-   * this file is used to set up the connection to the PostgreSQL database using the 'pg' library.
-   * It reads and validate the postgres connection config,
-   * creates a PostgreSQL connection pool, and exports a function to get the database connection, 
-   * then closes the connection pool when the application is terminated.
-   * @author Hamza Zm
-   * @version 1.0.0
-   * @since 2026-10-29
-   *  
-
-**/
-
+/**
+ * Loads and validates the PostgreSQL connection configuration, creates a
+ * connection pool, checks database connectivity, and closes the pool.
+ */
 
 dotenv.config();
 
+/**
+ * Read and validate the PostgreSQL connection configuration.
+ * @returns {{ connectionString: string }} The PostgreSQL connection settings.
+ * @throws {Error} If the DATABASE_URL environment variable is not set.
+ */
+function getDatabaseConfig() {
+  const connectionString = process.env.DATABASE_URL?.trim();
 
-function getDatabaseConnection() {
+  if (!connectionString) {
+    throw new Error(
+      "DATABASE_URL is required. Copy .env.example to .env and configure PostgreSQL.",
+    );
+  }
 
+  let databaseUrl;
 
-      // Read the database connection string from the environment variable.
-    const connectionString = process.env.DATABASE_URL?.trim(); 
+  try {
+    databaseUrl = new URL(connectionString);
+  } catch {
+    throw new Error("DATABASE_URL must be a valid PostgreSQL connection URL.");
+  }
 
+  if (!["postgres:", "postgresql:"].includes(databaseUrl.protocol)) {
+    throw new Error(
+      "DATABASE_URL must use the postgres or postgresql protocol.",
+    );
+  }
 
-
-    if(!connectionString){
-        throw new Error("DATABASE_URL environment variable is not set.");
-
-
-    }
-
-
-    let databaseUrl;
-
-    try{
-
-        
-    }
-
+  return { connectionString };
 }
+
+/**
+ * Create a PostgreSQL connection pool.
+ *
+ * @returns {import("pg").Pool} A configured PostgreSQL connection pool.
+ */
+function createDatabasePool() {
+  const { connectionString } = getDatabaseConfig();
+
+  return new Pool({
+    connectionString,
+    max: 10,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 5_000,
+  });
+}
+
+/**
+ * Check that PostgreSQL is reachable.
+ *
+ * @param {import("pg").Pool} databasePool - The PostgreSQL connection pool.
+ * @returns {Promise<void>} Resolves when the database is reachable.
+ */
+async function checkDatabaseConnection(databasePool) {
+  await databasePool.query("SELECT 1");
+}
+
+/**
+ * Close all connections managed by the PostgreSQL pool.
+ *
+ * @param {import("pg").Pool} databasePool - The PostgreSQL connection pool.
+ * @returns {Promise<void>} Resolves when the pool is closed.
+ */
+async function closeDatabaseConnection(databasePool) {
+  await databasePool.end();
+}
+
+module.exports = {
+  checkDatabaseConnection,
+  closeDatabaseConnection,
+  createDatabasePool,
+  getDatabaseConfig,
+};

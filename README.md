@@ -81,6 +81,85 @@ npm run build:client
 
 This command creates the browser bundle at `public/build/app.js`.
 
+## PostgreSQL Setup
+
+Phase 2 adds the PostgreSQL connection foundation using the `pg` driver and
+the `dotenv` package. Database migrations and persistent blockchain storage
+will be added in later phases.
+
+### Create the Database
+
+Create a PostgreSQL database named `blockchain` using pgAdmin or the command
+line:
+
+```bash
+createdb blockchain
+```
+
+### Configure Environment Variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Update `.env` with the credentials for your local PostgreSQL installation. Use
+the following format:
+
+```env
+DATABASE_URL=postgresql://USERNAME:PASSWORD@localhost:5432/blockchain
+PORT=3000
+```
+
+Replace `your_password` with your PostgreSQL password. If the password
+contains special URL characters, encode them before placing the value in
+`DATABASE_URL`.
+
+The `.env` file contains local credentials and must not be committed. Only
+`.env.example` should be committed.
+
+### Verify the Database Connection
+
+Run the Phase 2 connection check:
+
+```bash
+npm run db:check
+```
+
+Successful output:
+
+```text
+PostgreSQL connection successful.
+```
+
+The check creates a connection pool, runs `SELECT 1`, and closes the pool.
+
+### Test Database Configuration Errors
+
+To verify missing configuration handling, temporarily move the local
+environment file:
+
+```bash
+mv .env .env.backup
+npm run db:check
+mv .env.backup .env
+```
+
+The command should fail with a message indicating that `DATABASE_URL` is
+required.
+
+### Phase 2 Validation
+
+Run the project checks after configuring PostgreSQL:
+
+```bash
+npm run db:check
+npm test
+npm run build:client
+git diff --check
+```
+
 ## Run the Application
 
 Start the Express server:

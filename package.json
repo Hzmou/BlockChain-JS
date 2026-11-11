@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build:client": "vite build",
+    "db:check": "node scripts/check-database.js",
     "start": "npm run build:client && node server.js",
     "test": "node --test"
   },
