@@ -10,12 +10,12 @@ git switch -c feature/postgres-database-integration
 
 Replace the current in-memory blockchain persistence with PostgreSQL while preserving:
 
-- Existing blockchain behavior.
-- Existing API routes and response shapes.
-- Browser wallet signing and private-key protection.
-- Mining and transaction workflows.
-- Existing frontend behavior.
-- Existing automated tests.
+* Existing blockchain behavior.
+* Existing API routes and response shapes.
+* Browser wallet signing and private-key protection.
+* Mining and transaction workflows.
+* Existing frontend behavior.
+* Existing automated tests.
 
 After this branch is complete, blocks, transactions, pending transfers, and wallet-related public data should survive server restarts.
 
@@ -23,11 +23,11 @@ After this branch is complete, blocks, transactions, pending transfers, and wall
 
 The application currently stores blockchain state in memory. This means:
 
-- Blocks are lost when the server restarts.
-- Pending transactions are lost when the server restarts.
-- Wallet balances are derived only from in-memory data.
-- There is no persistent transaction history.
-- There is no database-backed repository layer.
+* Blocks are lost when the server restarts.
+* Pending transactions are lost when the server restarts.
+* Wallet balances are derived only from in-memory data.
+* There is no persistent transaction history.
+* There is no database-backed repository layer.
 
 The existing API should remain compatible with the database-backed implementation.
 
@@ -35,24 +35,24 @@ The existing API should remain compatible with the database-backed implementatio
 
 PostgreSQL was selected because the application contains strongly related data:
 
-- Wallets.
-- Blocks.
-- Transactions.
-- Pending and confirmed transaction states.
-- Wallet addresses.
-- Balances.
-- Transaction history.
+* Wallets.
+* Blocks.
+* Transactions.
+* Pending and confirmed transaction states.
+* Wallet addresses.
+* Balances.
+* Transaction history.
 
 PostgreSQL provides:
 
-- Relational data modeling.
-- Foreign-key constraints.
-- Reliable database transactions.
-- Strong consistency.
-- Support for concurrent API requests.
-- JSON support when flexible data is needed.
-- Node.js compatibility through the `pg` package.
-- A practical path from local development to production deployment.
+* Relational data modeling.
+* Foreign-key constraints.
+* Reliable database transactions.
+* Strong consistency.
+* Support for concurrent API requests.
+* JSON support when flexible data is needed.
+* Node.js compatibility through the `pg` package.
+* A practical path from local development to production deployment.
 
 The database decision is documented in:
 
@@ -125,34 +125,34 @@ PostgreSQL database
 
 Routes remain responsible for:
 
-- Receiving HTTP requests.
-- Validating request shape.
-- Calling the service layer.
-- Returning JSON responses.
-- Returning correct HTTP status codes.
+* Receiving HTTP requests.
+* Validating request shape.
+* Calling the service layer.
+* Returning JSON responses.
+* Returning correct HTTP status codes.
 
 ### BlockchainService
 
 The service remains responsible for:
 
-- Transaction rules.
-- Address validation.
-- Balance calculations.
-- Mining behavior.
-- Mining rewards.
-- Chain validation.
-- Coordination between repositories.
-- Database transaction boundaries for complex operations.
+* Transaction rules.
+* Address validation.
+* Balance calculations.
+* Mining behavior.
+* Mining rewards.
+* Chain validation.
+* Coordination between repositories.
+* Database transaction boundaries for complex operations.
 
 ### Repository Layer
 
 Repositories are responsible for:
 
-- Executing SQL queries.
-- Reading and writing database records.
-- Mapping database rows to application objects.
-- Avoiding SQL logic in route handlers.
-- Returning explicit database errors.
+* Executing SQL queries.
+* Reading and writing database records.
+* Mapping database rows to application objects.
+* Avoiding SQL logic in route handlers.
+* Returning explicit database errors.
 
 ## Proposed Project Structure
 
@@ -248,12 +248,12 @@ CREATE TABLE blocks (
 
 The fields represent:
 
-- `block_index`: The block's position in the chain.
-- `timestamp`: The block timestamp.
-- `hash`: The block hash.
-- `previous_hash`: The hash of the previous block.
-- `nonce`: The proof-of-work nonce.
-- `created_at`: The database insertion time.
+* `block_index`: The block's position in the chain.
+* `timestamp`: The block timestamp.
+* `hash`: The block hash.
+* `previous_hash`: The hash of the previous block.
+* `nonce`: The proof-of-work nonce.
+* `created_at`: The database insertion time.
 
 ### Transactions
 
@@ -299,11 +299,11 @@ transactions.block_id
 
 This relationship allows the application to:
 
-- Find all transactions in a block.
-- Find the block containing a transaction.
-- Find all pending transactions.
-- Mark transactions as confirmed after mining.
-- Rebuild the chain from persistent records.
+* Find all transactions in a block.
+* Find the block containing a transaction.
+* Find all pending transactions.
+* Mark transactions as confirmed after mining.
+* Rebuild the chain from persistent records.
 
 ## Balance Calculation
 
@@ -401,11 +401,11 @@ Create versioned migration files:
 
 Migrations should be:
 
-- Versioned.
-- Reviewable.
-- Repeatable where practical.
-- Reversible where supported by the migration tool.
-- Safe to run against a clean development database.
+* Versioned.
+* Reviewable.
+* Repeatable where practical.
+* Reversible where supported by the migration tool.
+* Safe to run against a clean development database.
 
 ## Repository Responsibilities
 
@@ -467,14 +467,14 @@ The frontend should not need database-specific changes.
 
 The database integration must:
 
-- Log server-side database errors safely.
-- Avoid exposing credentials.
-- Return generic server errors for unexpected database failures.
-- Preserve validation errors for clients.
-- Roll back failed multi-step operations.
-- Avoid success responses after failed writes.
-- Avoid silently falling back to memory.
-- Detect connection failures during startup.
+* Log server-side database errors safely.
+* Avoid exposing credentials.
+* Return generic server errors for unexpected database failures.
+* Preserve validation errors for clients.
+* Roll back failed multi-step operations.
+* Avoid success responses after failed writes.
+* Avoid silently falling back to memory.
+* Detect connection failures during startup.
 
 ## Security Requirements
 
@@ -505,178 +505,178 @@ The server must never request, return, log, or persist a private key.
 
 ### Phase 1: Branch and Baseline
 
-- [ ] Create `feature/postgres-database-integration`.
-- [ ] Confirm the branch starts from updated `main`.
-- [ ] Run `npm test`.
-- [ ] Run `npm run build:client`.
-- [ ] Confirm `.env` is ignored.
-- [ ] Confirm no secrets are committed.
+* [x] Create `feature/postgres-database-integration`.
+* [x] Confirm the branch starts from updated `main`.
+* [x] Run `npm test`.
+* [x] Run `npm run build:client`.
+* [x] Confirm `.env` is ignored.
+* [x] Confirm no secrets are committed.
 
 Acceptance criteria:
 
-- Existing tests pass.
-- The frontend build passes.
-- The repository has no committed secrets.
+* Existing tests pass.
+* The frontend build passes.
+* The repository has no committed secrets.
 
 ### Phase 2: PostgreSQL Setup
 
-- [ ] Add the `pg` dependency.
-- [ ] Add PostgreSQL environment configuration.
-- [ ] Add `.env.example`.
-- [ ] Add a PostgreSQL connection pool.
-- [ ] Add connection error handling.
-- [ ] Add graceful pool shutdown.
-- [ ] Add a database health check.
+* [x] Add the `pg` dependency.
+* [x] Add PostgreSQL environment configuration.
+* [x] Add `.env.example`.
+* [x] Add a PostgreSQL connection pool.
+* [x] Add connection error handling.
+* [x] Add graceful pool shutdown.
+* [x] Add a database health check.
 
 Acceptance criteria:
 
-- The application connects to PostgreSQL.
-- Missing configuration produces a clear error.
-- Invalid configuration produces a clear error.
-- Credentials are not logged.
+* The application connects to PostgreSQL.
+* Missing configuration produces a clear error.
+* Invalid configuration produces a clear error.
+* Credentials are not logged.
 
 ### Phase 3: Database Migrations
 
-- [ ] Add the migration mechanism.
-- [ ] Create the wallets migration.
-- [ ] Create the blocks migration.
-- [ ] Create the transactions migration.
-- [ ] Add block-to-transaction relationships.
-- [ ] Add address and hash uniqueness constraints.
-- [ ] Add amount validation constraints.
-- [ ] Add transaction status constraints.
-- [ ] Add genesis block initialization.
-- [ ] Test migrations on a clean database.
-- [ ] Test running migrations more than once.
+* [x] Add the migration mechanism.
+* [x] Create the wallets migration.
+* [x] Create the blocks migration.
+* [x] Create the transactions migration.
+* [x] Add block-to-transaction relationships.
+* [x] Add address and hash uniqueness constraints.
+* [x] Add amount validation constraints.
+* [x] Add transaction status constraints.
+* [x] Add genesis block initialization.
+* [x] Test migrations on a clean database.
+* [x] Test running migrations more than once.
 
 Acceptance criteria:
 
-- All required tables exist.
-- Constraints are applied.
-- The genesis block is present.
-- Migrations are repeatable.
-- The schema matches this plan.
+* All required tables exist.
+* Constraints are applied.
+* The genesis block is present.
+* Migrations are repeatable.
+* The schema matches this plan.
 
 ### Phase 4: Repository Layer
 
-- [ ] Implement the wallet repository.
-- [ ] Implement the block repository.
-- [ ] Implement the transaction repository.
-- [ ] Use parameterized SQL queries.
-- [ ] Map database rows to application objects.
-- [ ] Add repository error handling.
-- [ ] Add repository tests.
+* [ ] Implement the wallet repository.
+* [ ] Implement the block repository.
+* [ ] Implement the transaction repository.
+* [ ] Use parameterized SQL queries.
+* [ ] Map database rows to application objects.
+* [ ] Add repository error handling.
+* [ ] Add repository tests.
 
 Acceptance criteria:
 
-- Required records can be created and read.
-- Duplicate addresses and hashes are rejected.
-- Pending and confirmed transactions are distinguishable.
-- Blocks are returned in order.
-- SQL injection risks are avoided through parameterization.
+* Required records can be created and read.
+* Duplicate addresses and hashes are rejected.
+* Pending and confirmed transactions are distinguishable.
+* Blocks are returned in order.
+* SQL injection risks are avoided through parameterization.
 
 ### Phase 5: Persistent Blockchain Loading
 
-- [ ] Load blocks from PostgreSQL on startup.
-- [ ] Load transactions associated with blocks.
-- [ ] Load pending transactions.
-- [ ] Reconstruct the blockchain object.
-- [ ] Validate the reconstructed chain.
-- [ ] Reject invalid persisted chains.
-- [ ] Prevent API startup before initialization succeeds.
+* [ ] Load blocks from PostgreSQL on startup.
+* [ ] Load transactions associated with blocks.
+* [ ] Load pending transactions.
+* [ ] Reconstruct the blockchain object.
+* [ ] Validate the reconstructed chain.
+* [ ] Reject invalid persisted chains.
+* [ ] Prevent API startup before initialization succeeds.
 
 Acceptance criteria:
 
-- Data is loaded after a restart.
-- Chain validity is calculated from persisted data.
-- Pending transactions remain available after a restart.
-- Database failures stop startup clearly.
-- The application does not silently reset the chain.
+* Data is loaded after a restart.
+* Chain validity is calculated from persisted data.
+* Pending transactions remain available after a restart.
+* Database failures stop startup clearly.
+* The application does not silently reset the chain.
 
 ### Phase 6: Persistent Transaction Submission
 
-- [ ] Update transaction submission to use PostgreSQL.
-- [ ] Verify signatures before insertion.
-- [ ] Validate sender balances from persisted history.
-- [ ] Insert valid transactions as pending.
-- [ ] Preserve the current API response.
-- [ ] Preserve private-key protection.
-- [ ] Add transaction persistence tests.
+* [ ] Update transaction submission to use PostgreSQL.
+* [ ] Verify signatures before insertion.
+* [ ] Validate sender balances from persisted history.
+* [ ] Insert valid transactions as pending.
+* [ ] Preserve the current API response.
+* [ ] Preserve private-key protection.
+* [ ] Add transaction persistence tests.
 
 Acceptance criteria:
 
-- Valid signed transactions are persisted.
-- Invalid signatures are rejected.
-- Insufficient balances are rejected.
-- Pending transactions survive a restart.
-- API behavior remains compatible.
+* Valid signed transactions are persisted.
+* Invalid signatures are rejected.
+* Insufficient balances are rejected.
+* Pending transactions survive a restart.
+* API behavior remains compatible.
 
 ### Phase 7: Persistent Mining
 
-- [ ] Load the latest block from PostgreSQL.
-- [ ] Load pending transactions.
-- [ ] Create the next block.
-- [ ] Perform proof-of-work.
-- [ ] Persist the new block.
-- [ ] Persist or associate the mining reward.
-- [ ] Associate included transactions with the block.
-- [ ] Mark included transactions as confirmed.
-- [ ] Use a database transaction for the complete mining operation.
-- [ ] Roll back on failure.
-- [ ] Add mining persistence tests.
+* [ ] Load the latest block from PostgreSQL.
+* [ ] Load pending transactions.
+* [ ] Create the next block.
+* [ ] Perform proof-of-work.
+* [ ] Persist the new block.
+* [ ] Persist or associate the mining reward.
+* [ ] Associate included transactions with the block.
+* [ ] Mark included transactions as confirmed.
+* [ ] Use a database transaction for the complete mining operation.
+* [ ] Roll back on failure.
+* [ ] Add mining persistence tests.
 
 Acceptance criteria:
 
-- Mining creates a persistent block.
-- Pending transactions become confirmed.
-- Pending transaction results are updated.
-- Mining rewards update balances.
-- The chain remains valid after mining.
-- Partial writes do not remain after failure.
+* Mining creates a persistent block.
+* Pending transactions become confirmed.
+* Pending transaction results are updated.
+* Mining rewards update balances.
+* The chain remains valid after mining.
+* Partial writes do not remain after failure.
 
 ### Phase 8: API and Frontend Regression Testing
 
-- [ ] Run the existing API tests against PostgreSQL.
-- [ ] Verify all read endpoints.
-- [ ] Verify all write endpoints.
-- [ ] Verify the existing dashboard loads.
-- [ ] Verify wallet creation.
-- [ ] Verify balance lookup.
-- [ ] Verify transaction submission.
-- [ ] Verify mining.
-- [ ] Verify pending transaction refresh.
-- [ ] Verify private-key protection.
-- [ ] Verify the Vite frontend build.
+* [ ] Run the existing API tests against PostgreSQL.
+* [ ] Verify all read endpoints.
+* [ ] Verify all write endpoints.
+* [ ] Verify the existing dashboard loads.
+* [ ] Verify wallet creation.
+* [ ] Verify balance lookup.
+* [ ] Verify transaction submission.
+* [ ] Verify mining.
+* [ ] Verify pending transaction refresh.
+* [ ] Verify private-key protection.
+* [ ] Verify the Vite frontend build.
 
 Acceptance criteria:
 
-- Existing frontend workflows continue working.
-- No API route requires database-specific frontend code.
-- Existing tests pass.
-- New persistence tests pass.
-- The dashboard continues to operate.
+* Existing frontend workflows continue working.
+* No API route requires database-specific frontend code.
+* Existing tests pass.
+* New persistence tests pass.
+* The dashboard continues to operate.
 
 ### Phase 9: Documentation and Cleanup
 
-- [ ] Update `README.md`.
-- [ ] Document PostgreSQL installation.
-- [ ] Document database creation.
-- [ ] Document environment variables.
-- [ ] Document migration commands.
-- [ ] Document test commands.
-- [ ] Document reset procedures.
-- [ ] Document private-key security.
-- [ ] Remove temporary debugging code.
-- [ ] Review database error messages.
-- [ ] Run formatting checks.
-- [ ] Review the final diff.
+* [ ] Update `README.md`.
+* [ ] Document PostgreSQL installation.
+* [ ] Document database creation.
+* [ ] Document environment variables.
+* [ ] Document migration commands.
+* [ ] Document test commands.
+* [ ] Document reset procedures.
+* [ ] Document private-key security.
+* [ ] Remove temporary debugging code.
+* [ ] Review database error messages.
+* [ ] Run formatting checks.
+* [ ] Review the final diff.
 
 Acceptance criteria:
 
-- A new developer can set up PostgreSQL from the documentation.
-- Secrets are not documented as committed values.
-- Migration and test commands are clear.
-- The final branch contains no unrelated changes.
+* A new developer can set up PostgreSQL from the documentation.
+* Secrets are not documented as committed values.
+* Migration and test commands are clear.
+* The final branch contains no unrelated changes.
 
 ## Testing Plan
 
@@ -692,30 +692,30 @@ npm test
 
 Add coverage for:
 
-- Successful database connections.
-- Missing `DATABASE_URL`.
-- Invalid database configuration.
-- Connection failures.
-- Clean connection shutdown.
-- Migrations on a clean database.
-- Repeatable migrations.
-- Required tables and constraints.
-- Genesis block initialization.
+* Successful database connections.
+* Missing `DATABASE_URL`.
+* Invalid database configuration.
+* Connection failures.
+* Clean connection shutdown.
+* Migrations on a clean database.
+* Repeatable migrations.
+* Required tables and constraints.
+* Genesis block initialization.
 
 ### Repository Tests
 
 Verify:
 
-- Creating and retrieving wallets.
-- Rejecting duplicate wallet addresses.
-- Creating and retrieving blocks.
-- Returning blocks in order.
-- Creating pending transactions.
-- Retrieving pending transactions.
-- Marking transactions as confirmed.
-- Finding transactions by address.
-- Rejecting invalid amounts.
-- Enforcing foreign-key relationships.
+* Creating and retrieving wallets.
+* Rejecting duplicate wallet addresses.
+* Creating and retrieving blocks.
+* Returning blocks in order.
+* Creating pending transactions.
+* Retrieving pending transactions.
+* Marking transactions as confirmed.
+* Finding transactions by address.
+* Rejecting invalid amounts.
+* Enforcing foreign-key relationships.
 
 ### Persistence Tests
 
@@ -733,27 +733,27 @@ Verify that:
 
 Verify that mining:
 
-- Persists a new block.
-- Persists the mining reward.
-- Includes pending transactions.
-- Marks included transactions as confirmed.
-- Removes transactions from pending results.
-- Updates wallet balances.
-- Preserves chain validity.
-- Rolls back completely when persistence fails.
+* Persists a new block.
+* Persists the mining reward.
+* Includes pending transactions.
+* Marks included transactions as confirmed.
+* Removes transactions from pending results.
+* Updates wallet balances.
+* Preserves chain validity.
+* Rolls back completely when persistence fails.
 
 ## Documentation Plan
 
 Update `README.md` with:
 
-- PostgreSQL installation requirements.
-- Database creation instructions.
-- Required environment variables.
-- Migration commands.
-- Server startup instructions.
-- Test commands.
-- Development database reset instructions.
-- Private-key storage limitations.
+* PostgreSQL installation requirements.
+* Database creation instructions.
+* Required environment variables.
+* Migration commands.
+* Server startup instructions.
+* Test commands.
+* Development database reset instructions.
+* Private-key storage limitations.
 
 Example setup:
 
@@ -769,31 +769,31 @@ The exact migration command will depend on the migration tool selected.
 
 ## Final Validation Checklist
 
-- [ ] PostgreSQL is required and documented.
-- [ ] Database connection configuration works.
-- [ ] Migrations run successfully.
-- [ ] Migrations are repeatable.
-- [ ] Genesis block is created correctly.
-- [ ] Blocks persist after restart.
-- [ ] Transactions persist after restart.
-- [ ] Pending transactions persist after restart.
-- [ ] Confirmed transactions are associated with blocks.
-- [ ] Mining rewards persist correctly.
-- [ ] Balances are calculated correctly.
-- [ ] Chain validity is preserved.
-- [ ] Signed transactions still work.
-- [ ] Invalid signatures are rejected.
-- [ ] Invalid addresses are rejected.
-- [ ] Insufficient balances are rejected.
-- [ ] Database failures are handled explicitly.
-- [ ] Private keys never enter the database.
-- [ ] Private keys never appear in logs.
-- [ ] Private keys never appear in API responses.
-- [ ] Existing API routes continue working.
-- [ ] Existing frontend workflows continue working.
-- [ ] `npm test` passes.
-- [ ] `npm run build:client` passes.
-- [ ] Documentation is updated.
+* [ ] PostgreSQL is required and documented.
+* [ ] Database connection configuration works.
+* [ ] Migrations run successfully.
+* [ ] Migrations are repeatable.
+* [ ] Genesis block is created correctly.
+* [ ] Blocks persist after restart.
+* [ ] Transactions persist after restart.
+* [ ] Pending transactions persist after restart.
+* [ ] Confirmed transactions are associated with blocks.
+* [ ] Mining rewards persist correctly.
+* [ ] Balances are calculated correctly.
+* [ ] Chain validity is preserved.
+* [ ] Signed transactions still work.
+* [ ] Invalid signatures are rejected.
+* [ ] Invalid addresses are rejected.
+* [ ] Insufficient balances are rejected.
+* [ ] Database failures are handled explicitly.
+* [ ] Private keys never enter the database.
+* [ ] Private keys never appear in logs.
+* [ ] Private keys never appear in API responses.
+* [ ] Existing API routes continue working.
+* [ ] Existing frontend workflows continue working.
+* [ ] `npm test` passes.
+* [ ] `npm run build:client` passes.
+* [ ] Documentation is updated.
 
 ## Completion Criteria
 
