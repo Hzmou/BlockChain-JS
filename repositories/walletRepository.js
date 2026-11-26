@@ -87,5 +87,6 @@ class WalletRepository {
   }
 }
 
+
 module.exports = WalletRepository;
 module.exports.WalletRepository = WalletRepository;
