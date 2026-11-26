@@ -60,15 +60,15 @@ function createApp(service) {
 
   function withApiErrors(handler) {
     return (request, response, next) => {
-      try {
-        handler(request, response);
-      } catch (error) {
-        if (!error.status && blockchainErrorStatuses.has(error.message)) {
-          error.status = blockchainErrorStatuses.get(error.message);
-        }
+      Promise.resolve()
+        .then(() => handler(request, response))
+        .catch((error) => {
+          if (!error.status && blockchainErrorStatuses.has(error.message)) {
+            error.status = blockchainErrorStatuses.get(error.message);
+          }
 
-        next(error);
-      }
+          next(error);
+        });
     };
   }
 
@@ -111,7 +111,7 @@ function createApp(service) {
 
   app.post(
     "/api/transactions",
-    withApiErrors((request, response) => {
+    withApiErrors(async (request, response) => {
       const body = request.body;
 
       if (!body || typeof body !== "object" || Array.isArray(body)) {
@@ -143,7 +143,7 @@ function createApp(service) {
         signature,
       };
 
-      service.submitTransaction(transaction);
+      await service.submitTransaction(transaction);
       response.status(201).json({
         message: "Transaction submitted successfully.",
         transaction,
@@ -172,8 +172,9 @@ function createApp(service) {
   // API route to get the list of pending transactions in the blockchain.
   app.get(
     "/api/transactions/pending",
-    withApiErrors((request, response) => {
-      response.json({ pendingTransactions: service.getPendingTransactions() });
+    withApiErrors(async (request, response) => {
+      const pendingTransactions = await service.getPendingTransactions();
+      response.json({ pendingTransactions });
     }),
   );
 
@@ -242,7 +243,9 @@ async function startServer() {
       transactionRepository,
     );
 
-    const blockchainService = new BlockchainService(blockchain);
+    const blockchainService = new BlockchainService(blockchain, {
+      transactionRepository,
+    });
 
     const app = createApp(blockchainService);
 

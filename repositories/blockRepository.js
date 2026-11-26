@@ -25,12 +25,12 @@ class BlockRepository {
    */
   async createBlock(block) {
     try {
-      const result = await this.databasePool.query(
+      const result = await queryable.query(
         `
           INSERT INTO blocks (
             block_index,
             timestamp,
-            hash,
+            hash,2e
             previous_hash,
             nonce
           )
@@ -97,7 +97,7 @@ class BlockRepository {
 
   async findLatestBlock() {
     try {
-      const result = await this.databasePool.query(`
+      const result = await queryable.query(`
         SELECT
           id,
           block_index,
