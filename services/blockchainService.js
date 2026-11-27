@@ -1,6 +1,8 @@
 /* Service for blockchain operations and persistent transaction submission. */
 
 const Wallet = require("../blockchain/wallet");
+const Block = require("../blockchain/block");
+const Transaction = require("../blockchain/Transaction");
 
 /**
  * Return the public transaction fields used in API responses.
@@ -59,9 +61,7 @@ function validateSignedTransaction(transaction) {
     typeof transaction.publicKey !== "string" ||
     typeof transaction.signature !== "string"
   ) {
-    throw new Error(
-      "A valid signature is required for real wallet transfers.",
-    );
+    throw new Error("A valid signature is required for real wallet transfers.");
   }
 
   if (!Wallet.verifyTransaction(transaction)) {
@@ -74,14 +74,23 @@ class BlockchainService {
    * Create a blockchain service with optional transaction persistence.
    *
    * @param {Object} blockchain - Blockchain instance providing in-memory operations.
-   * @param {{ transactionRepository?: Object|null }} [options={}] - Persistence dependencies.
+   * @param {{ databasePool?: Object|null, blockRepository?: Object|null, transactionRepository?: Object|null }} [options={}] - Persistence dependencies.
    */
-  constructor(blockchain, { transactionRepository = null } = {}) {
+  constructor(
+    blockchain,
+    {
+      databasePool = null,
+      blockRepository = null,
+      transactionRepository = null,
+    } = {},
+  ) {
     if (!blockchain) {
       throw new Error("A blockchain instance is required.");
     }
 
     this.blockchain = blockchain;
+    this.databasePool = databasePool;
+    this.blockRepository = blockRepository;
     this.transactionRepository = transactionRepository;
   }
 
@@ -98,6 +107,159 @@ class BlockchainService {
     }
 
     return this.submitPersistentTransaction(transaction);
+  }
+
+  /**
+   * Mine a block and persist it together with its reward and included
+   * transactions in one database transaction.
+   *
+   * @param {string} minerAddress - Address receiving the mining reward.
+   * @returns {Promise<Block>} The mined block.
+   * @throws {Error} If mining or persistence fails.
+   */
+  async minePersistentBlock(minerAddress) {
+    if (
+      typeof minerAddress !== "string" ||
+      !/^[0-9a-f]{64}$/.test(minerAddress)
+    ) {
+      throw new Error(
+        "A valid miner address is required for persistent mining.",
+      );
+    }
+
+    if (
+      !this.databasePool ||
+      !this.blockRepository ||
+      !this.transactionRepository
+    ) {
+      throw new Error(
+        "Database pool and repositories are required for persistent mining.",
+      );
+    }
+
+    const client = await this.databasePool.connect();
+    let transactionOpen = false;
+
+    try {
+      await client.query("BEGIN");
+      transactionOpen = true;
+
+      // Serialize mining operations across application instances.
+      await client.query("SELECT pg_advisory_xact_lock($1::BIGINT)", [7211001]);
+
+      const latestBlock = await this.blockRepository.findLatestBlock(client);
+
+      if (!latestBlock) {
+        throw new Error("No latest block found in the database.");
+      }
+
+      const pendingTransactions =
+        await this.transactionRepository.listPendingTransactionsForUpdate(
+          client,
+        );
+
+      const transactions = pendingTransactions.map((transaction) => {
+        // Recreate only the fields included in the block hash.
+        const result = {
+          fromAddress: transaction.fromAddress,
+          toAddress: transaction.toAddress,
+          amount: Number(transaction.amount),
+        };
+
+        if (transaction.publicKey) {
+          result.publicKey = transaction.publicKey;
+        }
+
+        if (transaction.signature) {
+          result.signature = transaction.signature;
+        }
+
+        return result;
+      });
+
+      // Add the mining reward as the final transaction in the block.
+      const rewardTransaction = new Transaction(
+        null,
+        minerAddress,
+        this.blockchain.miningReward,
+      );
+      transactions.push(rewardTransaction);
+
+      // Build and mine the next block using the latest persisted block.
+      const block = new Block(
+        latestBlock.index + 1,
+        Date.now(),
+        transactions,
+        latestBlock.hash,
+      );
+
+      block.mineBlock(this.blockchain.difficulty);
+
+      const persistedBlock = await this.blockRepository.createBlock(
+        block,
+        client,
+      );
+
+      const persistedReward =
+        await this.transactionRepository.createPendingTransaction(
+          rewardTransaction,
+          client,
+        );
+
+      const transactionIds = [
+        ...pendingTransactions.map((transaction) => transaction.id),
+        persistedReward.id,
+      ];
+
+      const attachedTransactions =
+        await this.transactionRepository.attachTransactionsToBlock(
+          transactionIds,
+          persistedBlock.id,
+          client,
+        );
+
+      if (attachedTransactions.length !== transactionIds.length) {
+        throw new Error(
+          "Not all transactions were attached to the new block in the database.",
+        );
+      }
+
+      const confirmedTransactions =
+        await this.transactionRepository.markTransactionsConfirmed(
+          transactionIds,
+          persistedBlock.id,
+          client,
+        );
+
+      if (confirmedTransactions.length !== transactionIds.length) {
+        throw new Error(
+          "Not all transactions were marked as confirmed in the database.",
+        );
+      }
+
+      await client.query("COMMIT");
+      transactionOpen = false;
+
+      // Update in-memory state only after the database commit succeeds.
+      this.blockchain.chain.push(block);
+
+      return block;
+    } catch (error) {
+      if (transactionOpen) {
+        try {
+          await client.query("ROLLBACK");
+        } catch (rollbackError) {
+          throw new AggregateError(
+            [error, rollbackError],
+            "Error during block mining and rollback.",
+          );
+        }
+      }
+
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**
@@ -147,16 +309,35 @@ class BlockchainService {
   }
 
   /**
-   * Mine pending transactions using the in-memory blockchain.
+   * Mine in memory when persistence is not configured, otherwise use the
+   * atomic PostgreSQL mining workflow.
    *
-   * Persistent mining is handled in a later integration phase.
-   *
-   * @param {string} minerAddress - Address to receive the mining reward.
-   * @returns {Object} The newly mined block.
+   * @param {string} minerAddress - Address receiving the mining reward.
+   * @returns {Object|Promise<Block>} The newly mined block.
+   * @throws {Error} If only some persistence dependencies are configured.
    */
   mineBlock(minerAddress) {
-    this.blockchain.minePendingTransactions(minerAddress);
-    return this.blockchain.getLatestBlock();
+    const persistenceDependencies = [
+      this.databasePool,
+      this.blockRepository,
+      this.transactionRepository,
+    ];
+    const hasPersistenceDependency = persistenceDependencies.some(Boolean);
+    const hasAllPersistenceDependencies =
+      persistenceDependencies.every(Boolean);
+
+    if (!hasPersistenceDependency) {
+      this.blockchain.minePendingTransactions(minerAddress);
+      return this.blockchain.getLatestBlock();
+    }
+
+    if (!hasAllPersistenceDependencies) {
+      throw new Error(
+        "Database pool and both repositories are required for persistent mining.",
+      );
+    }
+
+    return this.minePersistentBlock(minerAddress);
   }
 
   /**

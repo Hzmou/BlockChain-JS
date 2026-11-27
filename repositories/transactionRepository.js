@@ -27,7 +27,10 @@ class TransactionRepository {
    * @returns {Promise<Object>} The stored transaction.
    */
 
-  async createPendingTransaction(transaction) {
+  async createPendingTransaction(
+    transaction,
+    queryable = this.databasePool,
+  ) {
     if (!transaction) {
       throw new Error("Transaction is required");
     }
@@ -41,7 +44,7 @@ class TransactionRepository {
     }
 
     try {
-      const result = await this.databasePool.query(
+      const result = await queryable.query(
         `
           INSERT INTO transactions (
             from_address,
@@ -118,6 +121,42 @@ class TransactionRepository {
   }
 
   /**
+   * Retrieve and lock pending transactions until the surrounding database
+   * transaction completes.
+   *
+   * @param {import("pg").PoolClient} queryable - Active PostgreSQL client.
+   * @returns {Promise<Object[]>} Pending transactions ordered by ID.
+   */
+  async listPendingTransactionsForUpdate(queryable) {
+    try {
+      const result = await queryable.query(`
+        SELECT
+          id,
+          from_address,
+          to_address,
+          amount,
+          public_key,
+          signature,
+          block_id,
+          transaction_position,
+          status,
+          created_at
+        FROM transactions
+        WHERE status = 'pending'
+        ORDER BY id ASC
+        FOR UPDATE
+      `);
+
+      return result.rows.map(mapTransactionRow);
+    } catch (error) {
+      throw createRepositoryError(
+        "locking pending transactions for mining",
+        error,
+      );
+    }
+  }
+
+  /**
    * Find the transactions by the given address.
    * @param {string} address - Wallet address to find.
    * @returns {Promise<Object[]>} An array of matching transactions.
@@ -165,7 +204,11 @@ class TransactionRepository {
    * @param {number} blockId - Database block ID.
    * @returns {Promise<Object[]>} Updated transactions.
    */
-  async attachTransactionsToBlock(transactionIds, blockId) {
+  async attachTransactionsToBlock(
+    transactionIds,
+    blockId,
+    queryable = this.databasePool,
+  ) {
     const validIds = this.validateTransactionIds(transactionIds);
 
     if (validIds.length === 0) {
@@ -177,7 +220,7 @@ class TransactionRepository {
     }
 
     try {
-      const result = await this.databasePool.query(
+      const result = await queryable.query(
         `
           UPDATE transactions AS transactions
           SET
@@ -232,7 +275,11 @@ class TransactionRepository {
    * @param {number} blockId - Database block ID.
    * @returns {Promise<Object[]>} Confirmed transactions.
    */
-  async markTransactionsConfirmed(transactionIds, blockId) {
+  async markTransactionsConfirmed(
+    transactionIds,
+    blockId,
+    queryable = this.databasePool,
+  ) {
     const validIds = this.validateTransactionIds(transactionIds);
 
     if (validIds.length === 0) {
@@ -244,13 +291,14 @@ class TransactionRepository {
     }
 
     try {
-      const result = await this.databasePool.query(
+      const result = await queryable.query(
         `
           UPDATE transactions
           SET
             block_id = $2,
             status = 'confirmed'
           WHERE id = ANY($1::BIGINT[])
+            AND status = 'pending'
           RETURNING
             id,
             from_address,

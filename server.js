@@ -152,22 +152,23 @@ function createApp(service) {
   );
 
   // API route to mine a new block and add it to the blockchain.
-  app.post(
-    "/api/mining",
-    withApiErrors((request, response) => {
-      const minerAddress = request.body?.minerAddress;
+ app.post(
+  "/api/mining",
+  withApiErrors(async (request, response) => {
+    const minerAddress = request.body?.minerAddress;
 
-      if (!isValidAddress(minerAddress)) {
-        throw apiError("A valid miner address is required.", 400);
-      }
+    if (!isValidAddress(minerAddress)) {
+      throw apiError("A valid miner address is required.", 400);
+    }
 
-      const block = service.mineBlock(minerAddress);
-      response.status(201).json({
-        message: "Block mined successfully.",
-        block,
-      });
-    }),
-  );
+    const block = await service.mineBlock(minerAddress);
+
+    response.status(201).json({
+      message: "Block mined successfully.",
+      block,
+    });
+  }),
+);
 
   // API route to get the list of pending transactions in the blockchain.
   app.get(
@@ -244,6 +245,8 @@ async function startServer() {
     );
 
     const blockchainService = new BlockchainService(blockchain, {
+      databasePool,
+      blockRepository,
       transactionRepository,
     });
 

@@ -21,16 +21,17 @@ class BlockRepository {
   /**
    * Create a new block in the database.
    * @param {object} block - The block to create.
+   * @param {import("pg").Pool | import("pg").PoolClient} [queryable=this.databasePool] - Database client to use.
    * @returns {Promise<Object>} The created block.
    */
-  async createBlock(block) {
+  async createBlock(block, queryable = this.databasePool) {
     try {
       const result = await queryable.query(
         `
           INSERT INTO blocks (
             block_index,
             timestamp,
-            hash,2e
+            hash,
             previous_hash,
             nonce
           )
@@ -92,10 +93,10 @@ class BlockRepository {
 
   /**
    * Find the latest block in the blockchain.
-   * @returns {promise <Object|null>} The latest block or null if no blocks exist.
+   * @param {import("pg").Pool | import("pg").PoolClient} [queryable=this.databasePool] - Database client to use.
+   * @returns {Promise<Object|null>} The latest block or null if no blocks exist.
    */
-
-  async findLatestBlock() {
+  async findLatestBlock(queryable = this.databasePool) {
     try {
       const result = await queryable.query(`
         SELECT
