@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS blocks (
+    id BIGSERIAL PRIMARY KEY,
+    block_index INTEGER NOT NULL UNIQUE,
+    timestamp TEXT NOT NULL,
+    hash VARCHAR(64) NOT NULL UNIQUE,
+    previous_hash VARCHAR(64) NOT NULL,
+    nonce BIGINT NOT NULL CHECK (nonce >= 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

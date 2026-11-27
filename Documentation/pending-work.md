@@ -15,35 +15,35 @@ main
 
 The exact existing API branch name may differ, but the intended separation is:
 
-- `web-ui`: Browser dashboard and current API integration.
-- `wallet-management`: Wallet creation, import, recovery, and wallet switching.
-- `database-integration`: Persistent user, wallet metadata, blockchain, and transaction data.
+* `web-ui`: Browser dashboard and current API integration.
+* `wallet-management`: Wallet creation, import, recovery, and wallet switching.
+* `database-integration`: Persistent user, wallet metadata, blockchain, and transaction data.
 
 ## `web-ui` Scope
 
 The current `web-ui` branch should focus on:
 
-- Displaying blockchain data.
-- Checking wallet balances.
-- Mining blocks.
-- Adding browser-compatible transaction signing.
-- Keeping wallet state in browser memory.
-- Avoiding user accounts and database persistence.
-- Maintaining the current in-memory prototype behavior.
+* Displaying blockchain data.
+* Checking wallet balances.
+* Mining blocks.
+* Adding browser-compatible transaction signing.
+* Keeping wallet state in browser memory.
+* Avoiding user accounts and database persistence.
+* Maintaining the current in-memory prototype behavior.
 
 ## Future `wallet-management` Scope
 
 A separate `wallet-management` branch should address:
 
-- Creating a wallet from the dashboard.
-- Displaying the generated public wallet address.
-- Importing or restoring a wallet.
-- Signing transactions using the selected wallet.
-- Allowing users to switch between wallets.
-- Defining wallet backup and recovery behavior.
-- Keeping private keys on the client side.
-- Ensuring private keys are never sent to the API.
-- Supporting multiple browser users through separate client-side wallets.
+* Creating a wallet from the dashboard.
+* Displaying the generated public wallet address.
+* Importing or restoring a wallet.
+* Signing transactions using the selected wallet.
+* Allowing users to switch between wallets.
+* Defining wallet backup and recovery behavior.
+* Keeping private keys on the client side.
+* Ensuring private keys are never sent to the API.
+* Supporting multiple browser users through separate client-side wallets.
 
 A multi-user browser experience does not automatically require a database if each wallet exists only in the user’s browser. However, users could lose access after clearing browser storage or changing devices unless a secure recovery strategy is provided.
 
@@ -51,15 +51,15 @@ A multi-user browser experience does not automatically require a database if eac
 
 A separate `database-integration` branch should address persistent application data, including:
 
-- User accounts.
-- Wallet metadata.
-- Public wallet addresses.
-- Public keys.
-- Transaction history.
-- Blockchain and block persistence.
-- Pending transactions.
-- Mining records.
-- Application state across server restarts.
+* User accounts.
+* Wallet metadata.
+* Public wallet addresses.
+* Public keys.
+* Transaction history.
+* Blockchain and block persistence.
+* Pending transactions.
+* Mining records.
+* Application state across server restarts.
 
 Private keys should not be stored in the database by default.
 
@@ -81,13 +81,13 @@ Server and database:
 
 If encrypted private-key backup is added later, it should have a separate security design covering:
 
-- Password-based encryption.
-- Key derivation.
-- Recovery behavior.
-- Password loss.
-- Threat modeling.
-- Secure storage and transmission.
-- Protection against unauthorized access.
+* Password-based encryption.
+* Key derivation.
+* Recovery behavior.
+* Password loss.
+* Threat modeling.
+* Secure storage and transmission.
+* Protection against unauthorized access.
 
 ## Recommended Implementation Order
 
@@ -119,4 +119,6 @@ This approach should only be used if the application must support server-backed 
 Database integration should not be added casually to the current `web-ui` branch. It would change the project from an in-memory learning prototype into a persistent multi-user application.
 
 The current `WEB_UI_PLAN.md` describes the application as an in-memory prototype and does not currently include database integration. Therefore, `wallet-management` and `database-integration` are future feature areas that require their own plans, branches, security decisions, and acceptance criteria.
+
+```
 ```

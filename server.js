@@ -8,6 +8,18 @@ const express = require("express");
 const path = require("node:path");
 const Blockchain = require("./blockchain/blockchain");
 const BlockchainService = require("./services/blockchainService");
+const {
+  createDatabasePool,
+  closeDatabaseConnection,
+} = require("./config/database");
+
+const BlockRepository = require("./repositories/blockRepository");
+
+const TransactionRepository = require("./repositories/transactionRepository");
+
+const {
+  loadPersistedBlockchain,
+} = require("./services/persistentBlockchainLoader");
 
 function createApp(service) {
   if (!service) {
@@ -15,8 +27,6 @@ function createApp(service) {
   }
 
   const app = express();
-
-  
 
   // Parse JSON request bodies before API routes.
   app.use(express.json());
@@ -31,14 +41,12 @@ function createApp(service) {
     error.status = status;
     return error;
   }
- 
 
   // helper function to validate if a given address is a valid hexadecimal
   //  string of length 64 (representing a blockchain address).
   function isValidAddress(address) {
     return typeof address === "string" && /^[0-9a-f]{64}$/.test(address);
   }
-   
 
   const blockchainErrorStatuses = new Map([
     ["A transaction is required.", 400],
@@ -52,15 +60,15 @@ function createApp(service) {
 
   function withApiErrors(handler) {
     return (request, response, next) => {
-      try {
-        handler(request, response);
-      } catch (error) {
-        if (!error.status && blockchainErrorStatuses.has(error.message)) {
-          error.status = blockchainErrorStatuses.get(error.message);
-        }
+      Promise.resolve()
+        .then(() => handler(request, response))
+        .catch((error) => {
+          if (!error.status && blockchainErrorStatuses.has(error.message)) {
+            error.status = blockchainErrorStatuses.get(error.message);
+          }
 
-        next(error);
-      }
+          next(error);
+        });
     };
   }
 
@@ -103,7 +111,7 @@ function createApp(service) {
 
   app.post(
     "/api/transactions",
-    withApiErrors((request, response) => {
+    withApiErrors(async (request, response) => {
       const body = request.body;
 
       if (!body || typeof body !== "object" || Array.isArray(body)) {
@@ -135,39 +143,39 @@ function createApp(service) {
         signature,
       };
 
-      service.submitTransaction(transaction);
-      response
-        .status(201)
-        .json({
-          message: "Transaction submitted successfully.",
-          transaction,
-        });
-    }),
-  );
-
-  // API route to mine a new block and add it to the blockchain.
-  app.post(
-    "/api/mining",
-    withApiErrors((request, response) => {
-      const minerAddress = request.body?.minerAddress;
-
-      if (!isValidAddress(minerAddress)) {
-        throw apiError("A valid miner address is required.", 400);
-      }
-
-      const block = service.mineBlock(minerAddress);
+      await service.submitTransaction(transaction);
       response.status(201).json({
-        message: "Block mined successfully.",
-        block,
+        message: "Transaction submitted successfully.",
+        transaction,
       });
     }),
   );
 
+  // API route to mine a new block and add it to the blockchain.
+ app.post(
+  "/api/mining",
+  withApiErrors(async (request, response) => {
+    const minerAddress = request.body?.minerAddress;
+
+    if (!isValidAddress(minerAddress)) {
+      throw apiError("A valid miner address is required.", 400);
+    }
+
+    const block = await service.mineBlock(minerAddress);
+
+    response.status(201).json({
+      message: "Block mined successfully.",
+      block,
+    });
+  }),
+);
+
   // API route to get the list of pending transactions in the blockchain.
   app.get(
     "/api/transactions/pending",
-    withApiErrors((request, response) => {
-      response.json({ pendingTransactions: service.getPendingTransactions() });
+    withApiErrors(async (request, response) => {
+      const pendingTransactions = await service.getPendingTransactions();
+      response.json({ pendingTransactions });
     }),
   );
 
@@ -207,21 +215,60 @@ const blockchain = new Blockchain();
 const blockchainService = new BlockchainService(blockchain);
 const app = createApp(blockchainService);
 
-// start the server only when this file is run directly, not when imported for testing.
-
-if (require.main == module) {
+/**
+ * Initialize PostgreSQL-backed blockchain state and start the Express server.
+ *
+ * Startup is intentionally cancelled if database loading or chain validation
+ * fails.
+ *
+ * @returns {Promise<void>}
+ */
+async function startServer() {
   const port = Number(process.env.PORT || 3000);
 
   if (!Number.isInteger(port) || port <= 0 || port > 65535) {
-    console.error(
-      `Invalid port number , post must be a valid port number: ${process.env.PORT}`,
-    );
-    process.exit(1);
+    throw new Error(`Invalid port number. PORT must be between 1 and 65535.`);
   }
 
-  app.listen(port, () => {
-    console.log(`Blockchain API listening on port ${port}`);
-  });
+  const databasePool = createDatabasePool();
+
+  try {
+    await databasePool.query("SELECT 1");
+
+    const blockRepository = new BlockRepository(databasePool);
+
+    const transactionRepository = new TransactionRepository(databasePool);
+
+    const blockchain = await loadPersistedBlockchain(
+      blockRepository,
+      transactionRepository,
+    );
+
+    const blockchainService = new BlockchainService(blockchain, {
+      databasePool,
+      blockRepository,
+      transactionRepository,
+    });
+
+    const app = createApp(blockchainService);
+
+    app.listen(port, () => {
+      console.log(`Blockchain API listening on port ${port}`);
+    });
+  } catch (error) {
+    await closeDatabaseConnection(databasePool);
+    throw error;
+  }
 }
 
-module.exports = { app, createApp };
+if (require.main === module) {
+  startServer().catch((error) => {
+    console.error("Failed to initialize blockchain:", error);
+    process.exitCode = 1;
+  });
+}
+module.exports = {
+  app,
+  createApp,
+  startServer,
+};
